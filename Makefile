@@ -8,8 +8,8 @@ SRC_DIR = srcs/
 OBJ_DIR = objs/
 INCLUDES = -I includes/
 
-SRC_FILES = main
-INC_FILES = Gomoku
+SRC_FILES = main Board Game Player
+INC_FILES = Gomoku Board Game Player
 TEMPLATE_FILES = 
 
 INC	= $(addprefix $(INC_DIR), $(addsuffix .hpp, $(INC_FILES)))

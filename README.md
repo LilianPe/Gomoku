@@ -9,11 +9,8 @@ Doit pouvoir jouer soit :
 - Definir une fonction heuristique : Renvoie a quelle point une position est gagnante  
 - Ajouter une option de debug pour voir le raisonnement de l'IA  
 
-## Meilleur langage
-- Surement C++  
-
 ## Interface graphique
-- -  
+- SFML ?
 - Ajouter un timer affichant le temps de reflexion de l'IA  
 
 ## Bonus : 5 bonus pas de requirement
