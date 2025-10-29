@@ -1,0 +1,71 @@
+#include "Display.hpp"
+
+Display::Display(void) : _board(Board()) {}
+
+Display::Display(Board board) : _board(board) {}
+
+Display::Display(const Display& other) : _board(other.getBoard()) {}
+
+Display::~Display() {}
+
+const Board Display::getBoard(void) const {
+	return _board;
+}
+
+void Display::open(void) {
+	int windowSize = _cellSize * _gridSize;
+	sf::RenderWindow window(sf::VideoMode(windowSize, windowSize), "Gomoku");
+	while (window.isOpen()) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+			if (event.type == sf::Event::MouseButtonPressed) {
+                int x = event.mouseButton.x / _cellSize;
+                int y = event.mouseButton.y / _cellSize;
+                _board.setCell(x, y, 2); // poser un pion noir par exemple
+            }
+        }
+		window.clear(sf::Color(240, 217, 181));
+        _drawGrid(window);
+        _drawPieces(window);
+        window.display();
+    }
+}
+
+void Display::_drawGrid(sf::RenderWindow& window) {
+	sf::RectangleShape line;
+
+	for (int x = 0; x <= _gridSize; x++) {
+		line.setSize(sf::Vector2f(2, _cellSize * _gridSize));
+		line.setFillColor(sf::Color::Black);
+		line.setPosition(x * _cellSize, 0);
+		window.draw(line);
+	}
+
+	for (int y = 0; y <= _gridSize; y++) {
+		line.setSize(sf::Vector2f(_cellSize * _gridSize, 2));
+		line.setFillColor(sf::Color::Black);
+		line.setPosition(0, y * _cellSize);
+		window.draw(line);
+	}
+}
+
+void Display::_drawPieces(sf::RenderWindow& window) {
+	for (int y = 0; y < _gridSize; y++) {
+		for (int x = 0; x < _gridSize; x++) {
+			int cell = _board.getCell(x, y); // 0 = vide, 1 = noir, 2 = blanc
+			if (cell == 0)
+				continue;
+
+			float ray = _cellSize / 2.5f;
+			sf::CircleShape piece(ray);
+			piece.setPosition(x * _cellSize - ray, y * _cellSize - ray);
+			if (cell == 1)
+				piece.setFillColor(sf::Color::Black);
+			else if (cell == 2)
+				piece.setFillColor(sf::Color::White);
+			window.draw(piece);
+		}
+	}
+}

@@ -1,8 +1,8 @@
 #include "Gomoku.hpp"
-#include "Board.hpp"
+#include "Display.hpp"
 
 int main(/*int argc, char **argv*/) {
-	Board b;
-	b.display();
+	Display d;
+	d.open();
 	return(0);
 }

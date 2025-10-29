@@ -1,8 +1,19 @@
 # Gomoku
 
+## Launch
+```bash
+make run
+```
+
+## Regles:
+
 Doit pouvoir jouer soit :  
 - Contre lui meme, doit toujours gagner en commencant  
 - Contre un joueur avec une feature de suggestion de mouvement  
+
+- Pour gagner: Alligner 5 pions sans qu'un puisse etre manger  / manger 5 paires adverse
+- Pour manger une paire: 0112 -> 2002
+- 
 
 ## Algo : Min-Max
 - Doit avoir au moins 10 de profondeur  
