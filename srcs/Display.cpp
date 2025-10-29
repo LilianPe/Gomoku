@@ -14,7 +14,7 @@ const Board Display::getBoard(void) const {
 
 void Display::open(void) {
 	int windowSize = _cellSize * _gridSize;
-	sf::RenderWindow window(sf::VideoMode(windowSize, windowSize), "Gomoku");
+	sf::RenderWindow window(sf::VideoMode(windowSize, windowSize), "Gomoku", sf::Style::Close);
 	while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -23,7 +23,7 @@ void Display::open(void) {
 			if (event.type == sf::Event::MouseButtonPressed) {
                 int x = event.mouseButton.x / _cellSize;
                 int y = event.mouseButton.y / _cellSize;
-                _board.setCell(x, y, 2); // poser un pion noir par exemple
+                _board.setCell(x, y, 1); // poser un pion noir par exemple
             }
         }
 		window.clear(sf::Color(240, 217, 181));
@@ -35,18 +35,19 @@ void Display::open(void) {
 
 void Display::_drawGrid(sf::RenderWindow& window) {
 	sf::RectangleShape line;
+	float ray = _cellSize / 2.5f;
 
 	for (int x = 0; x <= _gridSize; x++) {
 		line.setSize(sf::Vector2f(2, _cellSize * _gridSize));
 		line.setFillColor(sf::Color::Black);
-		line.setPosition(x * _cellSize, 0);
+		line.setPosition(x * _cellSize + ray, 0);
 		window.draw(line);
 	}
 
 	for (int y = 0; y <= _gridSize; y++) {
 		line.setSize(sf::Vector2f(_cellSize * _gridSize, 2));
 		line.setFillColor(sf::Color::Black);
-		line.setPosition(0, y * _cellSize);
+		line.setPosition(0, y * _cellSize + ray);
 		window.draw(line);
 	}
 }
@@ -58,9 +59,8 @@ void Display::_drawPieces(sf::RenderWindow& window) {
 			if (cell == 0)
 				continue;
 
-			float ray = _cellSize / 2.5f;
-			sf::CircleShape piece(ray);
-			piece.setPosition(x * _cellSize - ray, y * _cellSize - ray);
+			sf::CircleShape piece(_cellSize / 2.5f);
+			piece.setPosition(x * _cellSize, y * _cellSize);
 			if (cell == 1)
 				piece.setFillColor(sf::Color::Black);
 			else if (cell == 2)
