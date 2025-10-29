@@ -1,6 +1,7 @@
 #ifndef DISPLAY_HPP
 # define DISPLAY_HPP
 # include "Board.hpp"
+# include "Game.hpp"
 #include <SFML/Graphics.hpp>
 
 class Display {
@@ -12,10 +13,12 @@ class Display {
 		~Display();
 
 		const Board getBoard(void) const;
+		const Game getGame(void) const;
 		void open(void);
 		
 		private: 
 		Board _board;
+		Game _game;
 		const int _cellSize = 40;
 		const int _gridSize = 19;
 		

@@ -1,15 +1,19 @@
 #include "Display.hpp"
 
-Display::Display(void) : _board(Board()) {}
+Display::Display(void) : _board(Board()), _game(Game(_board)) {}
 
-Display::Display(Board board) : _board(board) {}
+Display::Display(Board board) : _board(board), _game(Game(_board)) {}
 
-Display::Display(const Display& other) : _board(other.getBoard()) {}
+Display::Display(const Display& other) : _board(other.getBoard()), _game(other.getGame()) {}
 
 Display::~Display() {}
 
 const Board Display::getBoard(void) const {
 	return _board;
+}
+
+const Game Display::getGame(void) const {
+	return _game;
 }
 
 void Display::open(void) {
@@ -23,7 +27,18 @@ void Display::open(void) {
 			if (event.type == sf::Event::MouseButtonPressed) {
                 int x = event.mouseButton.x / _cellSize;
                 int y = event.mouseButton.y / _cellSize;
-                _board.setCell(x, y, 1); // poser un pion noir par exemple
+                 if (event.mouseButton.button == sf::Mouse::Left) {
+					if (_game.moveIsValid(x, y, 1)) {
+						_board.setCell(x, y, 1);
+						_game.nextTurn();
+					}
+                } 
+                else if (event.mouseButton.button == sf::Mouse::Right) {
+                    if (_game.moveIsValid(x, y, 2)) {
+						_board.setCell(x, y, 2);
+						_game.nextTurn();
+					}
+                }
             }
         }
 		window.clear(sf::Color(240, 217, 181));
