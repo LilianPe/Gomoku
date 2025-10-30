@@ -1,8 +1,8 @@
 #include "Game.hpp"
 
 Game::Game(Board& board) :
-	_player1(Player()),
-	_player2(Player()),
+	_player1(Player("Player1")),
+	_player2(Player("Player2")),
 	_board(board),
 	_currentTurn(1),
 	_winner(0),
@@ -20,6 +20,12 @@ Game::Game(Board& board, Player player1, Player player2) :
 
 Game::~Game() {}
 
+void Game::restart(void) {
+	_board.clear();
+	_currentTurn = 1;
+	_winner = 0;
+	_end = false;
+}
 
 void Game::displayBoard(void) {
 	_board.display();
@@ -43,59 +49,130 @@ bool Game::moveIsValid(int x, int y, int p) {
 	return !_end;
 }
 
-void Game::updateState(void) {
-	_checkRow();
-	_checkCollumn();
+void Game::updateState(int x, int y) {
+	_checkFive(x, y);
+	_checkDoubleThree(x, y);
 }
 
-void Game::_checkRow(void) {
+void Game::_checkFive(int x, int y) {
 	int cell = 0;
-	for (int i = 0; i < SIZE; i++) {
-		int prevCell = 0;
-		int aligned = 0;
-		for (int j = 0; j < SIZE; j++) {
-			cell = _board.getCell(j, i);
-			if (cell != 0 && cell == prevCell) {
-				aligned++;
-			}
-			else if (cell != 0) {
-				aligned = 1;
-			}
-			else {
-				aligned = 0;
-			}
-			if (aligned == 5) {
-				_end = true;
-				_winner = cell;
-			}
-			prevCell = cell;
+	int n = 0;
+	int count = 0;
+	std::vector<std::pair<int, int>> directions = {
+		{1, 0},
+		{1, 1},
+		{0, 1},
+		{-1, 1}
+	};
+	for (auto [dx, dy] : directions) {
+		cell = _board.getCell(x, y);
+		n = 1;
+		count = 1;
+		while (n < 5 &&
+			_isInLimit(x + n * dx, y + n * dy) &&
+			_board.getCell(x + n * dx, y + n * dy) == cell) {
+			n++;
+			count++;
+		}
+		n = -1;
+		while (n < 5 && 
+			_isInLimit(x + n * dx, y + n * dy) &&
+			_board.getCell(x + n * dx, y + n * dy) == cell) {
+			n--;
+			count++;
+		}
+		if (count >= 5) {
+			_end = true;
+			_winner = cell;
+			return ;
 		}
 	}
 }
 
-void Game::_checkCollumn(void) {
+void Game::_checkDoubleThree(int x, int y) {
+	int pawnCell = 0;
 	int cell = 0;
-	for (int i = 0; i < SIZE; i++) {
-		int prevCell = 0;
-		int aligned = 0;
-		for (int j = 0; j < SIZE; j++) {
-			cell = _board.getCell(i, j);
-			if (cell != 0 && cell == prevCell) {
-				aligned++;
+	int n = 0;
+	int count = 0;
+	int threes = 0;
+	int emptyFirst = 0;
+	int emptySecond = 0;
+	int emptyMid = 0;
+	std::vector<std::pair<int, int>> directions = {
+		{1, 0},
+		{1, 1},
+		{0, 1},
+		{-1, 1}
+	};
+	for (auto [dx, dy] : directions) {
+		pawnCell = _board.getCell(x, y);
+		n = 1;
+		count = 1;
+		emptyFirst = 0;
+		emptySecond = 0;
+		emptyMid = 0;
+		while (n < 5 && _isInLimit(x + n * dx, y + n * dy)) {
+			cell = _board.getCell(x + n * dx, y + n * dy);
+			if (cell == pawnCell) {
+				count++;
 			}
-			else if (cell != 0) {
-				aligned = 1;
+			else if (cell == 0) {
+				if (!emptyMid) {
+					emptyMid = 1;
+				}
+				else if (emptyMid == 1 && _board.getCell(x + (n - 1) * dx, y + (n - 1) * dy) == 0) {
+					emptyMid = 0;
+					emptyFirst = 1;
+					break;
+				}
+				else if (emptyMid == 1 && _board.getCell(x + (n - 1) * dx, y + (n - 1) * dy) == pawnCell) {
+					emptyFirst = 1;
+					break;
+				}
 			}
 			else {
-				aligned = 0;
+				break;
 			}
-			if (aligned == 5) {
-				_end = true;
-				_winner = cell;
+			n++;
+		}
+		n = -1;
+		while (abs(n) < 5 && _isInLimit(x + n * dx, y + n * dy)) {
+			cell = _board.getCell(x + n * dx, y + n * dy);
+			if (cell == pawnCell) {
+				count++;
 			}
-			prevCell = cell;
+			else if (cell == 0) {
+				if (!emptyMid) {
+					emptyMid = 1;
+				}
+				else if (emptyMid == 1 && _board.getCell(x + (n + 1) * dx, y + (n + 1) * dy) == 0) {
+					emptyMid = 0;
+					emptySecond = 1;
+					break;
+				}
+				else if (emptyMid == 1 && _board.getCell(x + (n + 1) * dx, y + (n + 1) * dy) == pawnCell) {
+					emptySecond = 1;
+					break;
+				}
+			}
+			else {
+				break;
+			}
+			n--;
+		}
+		if (count == 3 && emptyFirst == 1 && emptySecond == 1) {
+			threes++;
 		}
 	}
+	if (threes >= 2) {
+		_end = true;
+		_winner = (pawnCell == 1) ? 2 : 1;
+		return ;
+	}
+}
+
+bool Game::_isInLimit(int x, int y) {
+	return (x >= 0 && x <= SIZE && y >=0 && y <= SIZE);
 }
 
 int Game::getCurrentTurn(void) const {
@@ -122,6 +199,8 @@ bool Game::getEnd(void) {
 	return _end;
 }
 
-int Game::getWinner(void) {
-	return _winner;
+Player Game::getWinner(void) {
+	if (_winner == 1) return _player1;
+	else if (_winner == 2) return _player2;
+	else throw std::logic_error("No winner!");
 }

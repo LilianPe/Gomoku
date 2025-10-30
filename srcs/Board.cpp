@@ -15,6 +15,10 @@ void Board::display(void) {
 	}
 }
 
+void Board::clear(void) {
+	_board = std::vector<std::vector<int>>(SIZE, std::vector<int>(SIZE, 0));
+}
+
 int Board::getCell(int x, int y) {
 	return _board[y][x];
 }

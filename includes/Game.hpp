@@ -11,10 +11,11 @@ class Game{
 		// Game(const Game& other);
 		~Game();
 
+		void restart(void);
 		void displayBoard(void);
 		void nextTurn(void);
 		bool moveIsValid(int x, int y, int p);
-		void updateState(void);
+		void updateState(int x, int y);
 
 		int getCurrentTurn(void) const;
 		const Player getPlayer1(void) const;
@@ -22,11 +23,12 @@ class Game{
 		Board& getBoard(void);
 		const Board& getBoard(void) const;
 		bool getEnd(void);
-		int getWinner(void);
+		Player getWinner(void);
 	
 	private:
-		void _checkRow(void);
-		void _checkCollumn(void);
+		void _checkFive(int x, int y);
+		void _checkDoubleThree(int x, int y);
+		bool _isInLimit(int x, int y);
 
 		Player _player1;
 		Player _player2;

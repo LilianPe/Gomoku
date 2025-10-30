@@ -1,7 +1,7 @@
 #variables
 
 CC = c++
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra -Werror -std=c++17 -g3
 NAME = Gomoku
 INC_DIR = includes/
 SRC_DIR = srcs/

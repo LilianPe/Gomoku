@@ -31,11 +31,12 @@ void Display::open(void) {
                 if (event.type == sf::Event::MouseButtonPressed) {
                     int mouseX = event.mouseButton.x;
                     int mouseY = event.mouseButton.y;
-                    // Bouton "Rejouer"
+                    // Button "Play again"
                     if (mouseX > windowSize/2 - 100 && mouseX < windowSize/2 + 100 &&
                         mouseY > windowSize/2 && mouseY < windowSize/2 + 50) {
+                            _game.restart();
                     }
-                    // Bouton "Quitter"
+                    // Button "Leave"
                     else if (mouseX > windowSize/2 - 100 && mouseX < windowSize/2 + 100 &&
                              mouseY > windowSize/2 + 70 && mouseY < windowSize/2 + 120) {
                         window.close();
@@ -50,9 +51,14 @@ void Display::open(void) {
                  if (event.mouseButton.button == sf::Mouse::Left) {
 					if (_game.moveIsValid(x, y, 1)) {
 						_board.setCell(x, y, 1);
-						_game.updateState();
+						_game.updateState(x, y);
 						if (_game.getEnd()) {
-							std::cout << "Winner :" << _game.getWinner() << std::endl; 
+                            try {
+                                std::cout << "Winner :" << _game.getWinner().getName() << std::endl; 
+                            }
+                            catch (const std::logic_error& e) {
+                                std::cout << "Error: " << e.what() << std::endl;
+                            }
 						}
 						_game.nextTurn();
 					}
@@ -60,9 +66,14 @@ void Display::open(void) {
                 else if (event.mouseButton.button == sf::Mouse::Right) {
                     if (_game.moveIsValid(x, y, 2)) {
 						_board.setCell(x, y, 2);
-						_game.updateState();
+						_game.updateState(x, y);
 						if (_game.getEnd()) {
-							std::cout << "Winner :" << _game.getWinner() << std::endl; 
+                            try {
+                                std::cout << "Winner :" << _game.getWinner().getName() << std::endl; 
+                            }
+                            catch (const std::logic_error& e) {
+                                std::cout << "Error: " << e.what() << std::endl;
+                            }
 						}
 						_game.nextTurn();
 					}
@@ -76,11 +87,14 @@ void Display::open(void) {
             sf::RectangleShape overlay(sf::Vector2f(windowSize, windowSize));
             overlay.setFillColor(sf::Color(0, 0, 0, 150)); // fond semi-transparent
             window.draw(overlay);
-
-			std::ostringstream oss;
-			oss << "Player " << _game.getWinner();
-			std::string message = oss.str();
-            sf::Text text("Player ", font, 50);
+			std::string message;
+            try {
+                message = "Winner: " + _game.getWinner().getName();
+            }
+            catch (const std::logic_error& e) {
+                message = "Error";
+            }
+            sf::Text text(message, font, 50);
             text.setFillColor(sf::Color::White);
             text.setPosition(windowSize / 2 - 150, windowSize / 2 - 100);
             window.draw(text);
