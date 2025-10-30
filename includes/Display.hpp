@@ -2,6 +2,8 @@
 # define DISPLAY_HPP
 # include "Board.hpp"
 # include "Game.hpp"
+#include <sstream>
+#include <string>
 #include <SFML/Graphics.hpp>
 
 class Display {
@@ -20,7 +22,7 @@ class Display {
 		Board _board;
 		Game _game;
 		const int _cellSize = 40;
-		const int _gridSize = 19;
+		const int _gridSize = SIZE;
 		
 		void _drawGrid(sf::RenderWindow& window);
 		void _drawPieces(sf::RenderWindow& window);

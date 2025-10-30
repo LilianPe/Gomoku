@@ -14,18 +14,26 @@ class Game{
 		void displayBoard(void);
 		void nextTurn(void);
 		bool moveIsValid(int x, int y, int p);
+		void updateState(void);
 
 		int getCurrentTurn(void) const;
 		const Player getPlayer1(void) const;
 		const Player getPlayer2(void) const;
 		Board& getBoard(void);
 		const Board& getBoard(void) const;
+		bool getEnd(void);
+		int getWinner(void);
 	
 	private:
+		void _checkRow(void);
+		void _checkCollumn(void);
+
 		Player _player1;
 		Player _player2;
 		Board& _board;
 		int _currentTurn;
+		int _winner;
+		bool _end;
 };
 
 #endif
