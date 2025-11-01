@@ -51,7 +51,11 @@ bool Game::moveIsValid(int x, int y, int p) {
 
 void Game::updateState(int x, int y) {
 	_checkFive(x, y);
-	_checkDoubleThree(x, y);
+	for (int x2 = 0; x2 < SIZE; x2++) {
+		for (int y2 = 0; y2 < SIZE; y2++) {
+			_checkDoubleThree(x2, y2);
+		}
+	}
 }
 
 void Game::_checkFive(int x, int y) {
@@ -172,7 +176,7 @@ void Game::_checkDoubleThree(int x, int y) {
 }
 
 bool Game::_isInLimit(int x, int y) {
-	return (x >= 0 && x <= SIZE && y >=0 && y <= SIZE);
+	return (x >= 0 && x < SIZE && y >= 0 && y < SIZE);
 }
 
 int Game::getCurrentTurn(void) const {
