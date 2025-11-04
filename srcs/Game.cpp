@@ -25,6 +25,8 @@ void Game::restart(void) {
 	_currentTurn = 1;
 	_winner = 0;
 	_end = false;
+	_player1.resetCaptures();
+	_player2.resetCaptures();
 }
 
 void Game::displayBoard(void) {
@@ -50,11 +52,20 @@ bool Game::moveIsValid(int x, int y, int p) {
 }
 
 void Game::updateState(int x, int y) {
-	_checkFive(x, y);
+	for (int k = 0; k < SIZE; k++) {
+		for (int j = 0; j < SIZE; j++) {
+			if (_board.getCell(k, j) != 0) { // Optimization to check only occupied cells
+				_checkFive(k, j);
+			}
+		}
+	}
 	for (int x2 = 0; x2 < SIZE; x2++) {
 		for (int y2 = 0; y2 < SIZE; y2++) {
 			_checkDoubleThree(x2, y2);
 		}
+	}
+	if (!_end) {
+		_checkCapture(x, y);
 	}
 }
 
@@ -62,6 +73,8 @@ void Game::_checkFive(int x, int y) {
 	int cell = 0;
 	int n = 0;
 	int count = 0;
+	std::vector<std::pair<int, int>> aligned_points;
+
 	std::vector<std::pair<int, int>> directions = {
 		{1, 0},
 		{1, 1},
@@ -75,21 +88,24 @@ void Game::_checkFive(int x, int y) {
 		while (n < 5 &&
 			_isInLimit(x + n * dx, y + n * dy) &&
 			_board.getCell(x + n * dx, y + n * dy) == cell) {
+			aligned_points.push_back({x + n * dx, y + n * dy});
 			n++;
 			count++;
 		}
 		n = -1;
-		while (n < 5 && 
+		while (n > -5 && 
 			_isInLimit(x + n * dx, y + n * dy) &&
 			_board.getCell(x + n * dx, y + n * dy) == cell) {
+			aligned_points.push_back({x + n * dx, y + n * dy});
 			n--;
 			count++;
 		}
-		if (count >= 5) {
+		if (count >= 5 && !_areCapturables(aligned_points)) {
 			_end = true;
 			_winner = cell;
-			return ;
+			return;
 		}
+		aligned_points.clear();
 	}
 }
 
@@ -173,6 +189,98 @@ void Game::_checkDoubleThree(int x, int y) {
 		_winner = (pawnCell == 1) ? 2 : 1;
 		return ;
 	}
+}
+
+void Game::_checkCapture(int x, int y) {
+	int cell = _board.getCell(x, y);
+	int opponentCell = 0;
+	if (cell == 1) {
+		opponentCell = 2;
+	} else {
+		opponentCell = 1;
+	}
+	std::vector<std::pair<int, int>> directions = {
+		{1, 0},
+		{1, 1},
+		{0, 1},
+		{-1, 1},
+		{-1, 0},
+		{-1, -1},
+		{0, -1},
+		{1, -1}
+	};
+	for (auto [dx, dy] : directions) {
+		int x1 = x + dx;
+		int y1 = y + dy;
+		int x2 = x + 2 * dx;
+		int y2 = y + 2 * dy;
+		if (_isInLimit(x2, y2) &&
+			_board.getCell(x1, y1) == opponentCell &&
+			_board.getCell(x2, y2) == opponentCell) {
+			int x3 = x + 3 * dx;
+			int y3 = y + 3 * dy;
+			if (_isInLimit(x3, y3) &&
+				_board.getCell(x3, y3) == cell) {
+				_board.setCell(x1, y1, 0);
+				_board.setCell(x2, y2, 0);
+				if (cell == 1) {
+					_player1.incrementCaptures(2);
+				} else {
+				_player2.incrementCaptures(2);
+				}
+			}
+		}
+	}
+	if (_player1.getCaptures() >= 10) {
+		_end = true;
+		_winner = 1;
+		return ;
+	}
+	if (_player2.getCaptures() >= 10) {
+		_end = true;
+		_winner = 2;
+		return ;
+	}
+}
+
+bool Game::_areCapturables(const std::vector<std::pair<int, int>>& points) {
+	for (const auto& [x, y] : points) {
+		int cell = _board.getCell(x, y);
+		int opponentCell = 0;
+		if (cell == 1) {
+			opponentCell = 2;
+		} else {
+			opponentCell = 1;
+		}
+		std::vector<std::pair<int, int>> directions = {
+			{1, 0},
+			{1, 1},
+			{0, 1},
+			{-1, 1},
+			{-1, 0},
+			{-1, -1},
+			{0, -1},
+			{1, -1}
+		};
+		for (auto [dx, dy] : directions) {
+			int x1 = x + dx;
+			int y1 = y + dy;
+			
+			if (!_isInLimit(x1, y1)) continue; // is in tab
+			if (_board.getCell(x1, y1) != cell) continue; // has ally cell around
+
+			int nxBefore = x - dx;
+            int nyBefore = y - dy;
+            int nxAfter  = x + 2 * dx;
+            int nyAfter  = y + 2 * dy;
+
+			if (!_isInLimit(nxBefore, nyBefore) || !_isInLimit(nxAfter, nyAfter)) continue;
+			if (_board.getCell(nxBefore, nyBefore) == cell || _board.getCell(nxAfter, nyAfter) == cell) continue;
+
+			return true; // Point is capturable
+			}
+	}
+	return false;
 }
 
 bool Game::_isInLimit(int x, int y) {

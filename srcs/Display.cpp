@@ -20,7 +20,7 @@ void Display::open(void) {
 	int windowSize = _cellSize * _gridSize;
 	sf::RenderWindow window(sf::VideoMode(windowSize, windowSize), "Gomoku", sf::Style::Close);
 	    sf::Font font;
-    font.loadFromFile("assets/arial.ttf"); // Assure-toi d’avoir une police
+    font.loadFromFile("assets/arial.ttf");
 	while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -48,7 +48,7 @@ void Display::open(void) {
 			if (event.type == sf::Event::MouseButtonPressed) {
                 int x = event.mouseButton.x / _cellSize;
                 int y = event.mouseButton.y / _cellSize;
-                 if (event.mouseButton.button == sf::Mouse::Left) {
+                if (event.mouseButton.button == sf::Mouse::Left) {
 					if (_game.moveIsValid(x, y, 1)) {
 						_board.setCell(x, y, 1);
 						_game.updateState(x, y);
@@ -78,6 +78,8 @@ void Display::open(void) {
 						_game.nextTurn();
 					}
                 }
+                std::cout << "Player 1 captures :" << _game.getPlayer1().getCaptures() << std::endl;
+                std::cout << "Player 2 captures :" << _game.getPlayer2().getCaptures() << std::endl;
             }
         }
 		window.clear(sf::Color(240, 217, 181));

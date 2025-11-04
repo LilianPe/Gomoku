@@ -28,7 +28,9 @@ class Game{
 	private:
 		void _checkFive(int x, int y);
 		void _checkDoubleThree(int x, int y);
+		void _checkCapture(int x, int y);
 		bool _isInLimit(int x, int y);
+		bool _areCapturables(const std::vector<std::pair<int, int>>& points);
 
 		Player _player1;
 		Player _player2;
