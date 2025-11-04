@@ -245,13 +245,6 @@ void Game::_checkCapture(int x, int y) {
 
 bool Game::_areCapturables(const std::vector<std::pair<int, int>>& points) {
 	for (const auto& [x, y] : points) {
-		int cell = _board.getCell(x, y);
-		int opponentCell = 0;
-		if (cell == 1) {
-			opponentCell = 2;
-		} else {
-			opponentCell = 1;
-		}
 		std::vector<std::pair<int, int>> directions = {
 			{1, 0},
 			{1, 1},
