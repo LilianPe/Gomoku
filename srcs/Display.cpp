@@ -90,14 +90,20 @@ void Display::open(void) {
             window.draw(overlay);
 			std::string message;
             try {
-                message = "Winner: " + _game.getWinner().getName();
+                message = "Winner: " + _game.getWinner().getName() + ": " + _game.getEndReason();
             }
             catch (const std::logic_error& e) {
                 message = "Error";
             }
             sf::Text text(message, font, 50);
+            sf::FloatRect textRect = text.getLocalBounds();
+            while (textRect.width > windowSize - 40 && text.getCharacterSize() > 10) {
+                text.setCharacterSize(text.getCharacterSize() - 2);
+                textRect = text.getLocalBounds();
+            }
             text.setFillColor(sf::Color::White);
-            text.setPosition(windowSize / 2 - 150, windowSize / 2 - 100);
+            text.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+            text.setPosition(windowSize / 2.0f, windowSize / 2.0f - 100);
             window.draw(text);
 
             // Bouton Rejouer
@@ -121,6 +127,26 @@ void Display::open(void) {
             quitText.setFillColor(sf::Color::Black);
             quitText.setPosition(windowSize / 2 - 45, windowSize / 2 + 80);
             window.draw(quitText);
+        }
+
+        // Pawn Shadow
+        sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+        int hoverX = mousePos.x / _cellSize;
+        int hoverY = mousePos.y / _cellSize;
+        if (hoverX >= 0 && hoverX < _gridSize && hoverY >= 0 && hoverY < _gridSize) {
+            if (_board.getCell(hoverX, hoverY) == 0 && !_game.getEnd()) {
+                int currentPlayer = _game.getCurrentTurn();
+                sf::Color color = (currentPlayer == 1)
+                    ? sf::Color(0, 0, 0, 100)
+                    : sf::Color(255, 255, 255, 180);
+                sf::CircleShape ghost(_cellSize / 2.5f);
+                ghost.setPosition(hoverX * _cellSize,
+                                hoverY * _cellSize);
+                ghost.setFillColor(color);
+                ghost.setOutlineThickness(2);
+                ghost.setOutlineColor(sf::Color(50, 50, 50, 120));
+                window.draw(ghost);
+            }
         }
         window.display();
     }

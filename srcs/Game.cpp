@@ -6,7 +6,8 @@ Game::Game(Board& board) :
 	_board(board),
 	_currentTurn(1),
 	_winner(0),
-	_end(false) {}
+	_end(false),
+	_endReason("") {}
 
 Game::Game(Board& board, Player player1, Player player2) : 
 	_player1(player1),
@@ -14,7 +15,8 @@ Game::Game(Board& board, Player player1, Player player2) :
 	_board(board),
 	_currentTurn(1),
 	_winner(0),
-	_end(false) {}
+	_end(false),
+	_endReason("") {}
 
 // Game::Game(const Game& other) : _player1(other.getPlayer1()), _player2(other.getPlayer2()), _board(other.getBoard()), _currentTurn(other.getCurrentTurn()) {}
 
@@ -103,6 +105,7 @@ void Game::_checkFive(int x, int y) {
 		if (count >= 5 && !_areCapturables(aligned_points)) {
 			_end = true;
 			_winner = cell;
+			_endReason = "5 pawn alligned.";
 			return;
 		}
 		aligned_points.clear();
@@ -233,11 +236,13 @@ void Game::_checkCapture(int x, int y) {
 	}
 	if (_player1.getCaptures() >= 10) {
 		_end = true;
+		_endReason = "10 pawn captured.";
 		_winner = 1;
 		return ;
 	}
 	if (_player2.getCaptures() >= 10) {
 		_end = true;
+		_endReason = "10 pawn captured.";
 		_winner = 2;
 		return ;
 	}
@@ -303,6 +308,10 @@ const Board& Game::getBoard(void) const {
 
 bool Game::getEnd(void) {
 	return _end;
+}
+
+std::string Game::getEndReason(void) {
+	return _endReason;
 }
 
 Player Game::getWinner(void) {

@@ -2,6 +2,7 @@
 # define GAME_HPP
 # include "Player.hpp"
 # include "Board.hpp"
+# include <string>
 
 class Game{
 
@@ -23,6 +24,7 @@ class Game{
 		Board& getBoard(void);
 		const Board& getBoard(void) const;
 		bool getEnd(void);
+		std::string getEndReason(void);
 		Player getWinner(void);
 	
 	private:
@@ -38,6 +40,7 @@ class Game{
 		int _currentTurn;
 		int _winner;
 		bool _end;
+		std::string _endReason;
 };
 
 #endif
