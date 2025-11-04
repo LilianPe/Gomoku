@@ -189,6 +189,7 @@ void Game::_checkDoubleThree(int x, int y) {
 	}
 	if (threes >= 2) {
 		_end = true;
+		_endReason = "DoubleThree are forbidden.";
 		_winner = (pawnCell == 1) ? 2 : 1;
 		return ;
 	}
