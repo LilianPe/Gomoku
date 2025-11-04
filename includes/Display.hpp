@@ -26,7 +26,7 @@ class Display {
 		
 		void _drawGrid(sf::RenderWindow& window);
 		void _drawPieces(sf::RenderWindow& window);
-
+		void _drawScores(sf::RenderWindow& window, int windowSize, sf::Font& Font);
 };
 
 #endif

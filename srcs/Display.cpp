@@ -19,7 +19,7 @@ const Game Display::getGame(void) const {
 void Display::open(void) {
 	int windowSize = _cellSize * _gridSize;
 	sf::RenderWindow window(sf::VideoMode(windowSize, windowSize), "Gomoku", sf::Style::Close);
-	    sf::Font font;
+	sf::Font font;
     font.loadFromFile("assets/arial.ttf");
 	while (window.isOpen()) {
         sf::Event event;
@@ -78,13 +78,12 @@ void Display::open(void) {
 						_game.nextTurn();
 					}
                 }
-                std::cout << "Player 1 captures :" << _game.getPlayer1().getCaptures() << std::endl;
-                std::cout << "Player 2 captures :" << _game.getPlayer2().getCaptures() << std::endl;
             }
         }
 		window.clear(sf::Color(240, 217, 181));
         _drawGrid(window);
         _drawPieces(window);
+        _drawScores(window, windowSize, font);
 		if (_game.getEnd()) {
             sf::RectangleShape overlay(sf::Vector2f(windowSize, windowSize));
             overlay.setFillColor(sf::Color(0, 0, 0, 150)); // fond semi-transparent
@@ -162,4 +161,22 @@ void Display::_drawPieces(sf::RenderWindow& window) {
 			window.draw(piece);
 		}
 	}
+}
+
+void Display::_drawScores(sf::RenderWindow& window, int windowSize, sf::Font& font) {
+        std::string score_P1;
+        std::string score_P2;
+
+        score_P1 = "Player1 : " + std::to_string(_game.getPlayer1().getCaptures());
+        score_P2 = "Player2 : " + std::to_string(_game.getPlayer2().getCaptures());
+
+        sf::Text text1(score_P1, font, 20);
+        text1.setFillColor(sf::Color::Black);
+        text1.setPosition(windowSize / 98, (windowSize / 100) * 96);
+        window.draw(text1);
+        
+        sf::Text text2(score_P2, font, 20);
+        text2.setFillColor(sf::Color::Black);
+        text2.setPosition(windowSize / 98, (windowSize / 100) * 99);
+        window.draw(text2);
 }
