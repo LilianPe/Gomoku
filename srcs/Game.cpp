@@ -66,9 +66,7 @@ void Game::updateState(int x, int y) {
 			_checkDoubleThree(x2, y2);
 		}
 	}
-	if (!_end) {
-		_checkCapture(x, y);
-	}
+	_checkCapture(x, y);
 }
 
 void Game::_checkFive(int x, int y) {
@@ -236,24 +234,44 @@ void Game::_checkCapture(int x, int y) {
 				}
 			}
 		}
+	} 
+	// Cheking for 10 captures
+	if (_player1.getCaptures() == 8) {
+
+		std::vector<std::pair<int, int>> points;
+		for (int x = 0; x < SIZE; x++){
+			for (int y = 0; y < SIZE; y++) {
+				if (_board.getCell(x, y) == 2)
+					points.push_back({x, y});
+			}
+		}
+		if (_areCapturables(points)) {
+			_end = true;
+			_endReason = "10 pawn captured.";
+			_winner = 1;
+			return ;
+		}
 	}
-	if (_player1.getCaptures() >= 10) {
-		_end = true;
-		_endReason = "10 pawn captured.";
-		_winner = 1;
-		return ;
-	}
-	if (_player2.getCaptures() >= 10) {
-		_end = true;
-		_endReason = "10 pawn captured.";
-		_winner = 2;
-		return ;
+	if (_player2.getCaptures() == 8) {
+
+		std::vector<std::pair<int, int>> points;
+		for (int x = 0; x < SIZE; x++){
+			for (int y = 0; y < SIZE; y++) {
+				if (_board.getCell(x, y) == 1)
+					points.push_back({x, y});
+			}
+		}
+		if (_areCapturables(points)) {
+			_end = true;
+			_endReason = "10 pawn captured.";
+			_winner = 2;
+			return ;
+		}
 	}
 }
 
 bool Game::_areCapturables(const std::vector<std::pair<int, int>>& points) {
 	for (const auto& [x, y] : points) {
-		printf("x: %d, Y : %d\n",x, y);
 		int cell = _board.getCell(x, y);
 		std::vector<std::pair<int, int>> directions = {
 			{1, 0},
