@@ -56,7 +56,7 @@ bool Game::moveIsValid(int x, int y, int p) {
 void Game::updateState(int x, int y) {
 	for (int k = 0; k < SIZE; k++) {
 		for (int j = 0; j < SIZE; j++) {
-			if (_board.getCell(k, j) != 0) { // Optimization to check only occupied cells
+			if (_board.getCell(k, j) != 0 && !_end) { // Optimization to check only occupied cells
 				_checkFive(k, j);
 			}
 		}
@@ -87,6 +87,7 @@ void Game::_checkFive(int x, int y) {
 		cell = _board.getCell(x, y);
 		n = 1;
 		count = 1;
+		aligned_points.push_back({x, y});
 		while (n < 5 &&
 			_isInLimit(x + n * dx, y + n * dy) &&
 			_board.getCell(x + n * dx, y + n * dy) == cell) {
@@ -103,9 +104,10 @@ void Game::_checkFive(int x, int y) {
 			count++;
 		}
 		if (count >= 5 && !_areCapturables(aligned_points)) {
+			printf("ENDING");
 			_end = true;
 			_winner = cell;
-			_endReason = "5 pawn alligned.";
+			_endReason = "5 pawns aligned.";
 			return;
 		}
 		aligned_points.clear();
@@ -251,6 +253,7 @@ void Game::_checkCapture(int x, int y) {
 
 bool Game::_areCapturables(const std::vector<std::pair<int, int>>& points) {
 	for (const auto& [x, y] : points) {
+		printf("x: %d, Y : %d\n",x, y);
 		int cell = _board.getCell(x, y);
 		std::vector<std::pair<int, int>> directions = {
 			{1, 0},
@@ -265,18 +268,21 @@ bool Game::_areCapturables(const std::vector<std::pair<int, int>>& points) {
 		for (auto [dx, dy] : directions) {
 			int x1 = x + dx;
 			int y1 = y + dy;
-			
-			if (!_isInLimit(x1, y1)) continue; // is in tab
-			if (_board.getCell(x1, y1) != cell) continue; // has ally cell around
-
 			int nxBefore = x - dx;
             int nyBefore = y - dy;
             int nxAfter  = x + 2 * dx;
             int nyAfter  = y + 2 * dy;
+			if (!_isInLimit(x1, y1)) continue; // is in tab
+			if (_board.getCell(x1, y1) != cell) continue; // has ally cell around
 
+	
 			if (!_isInLimit(nxBefore, nyBefore) || !_isInLimit(nxAfter, nyAfter)) continue;
 			if (_board.getCell(nxBefore, nyBefore) == cell || _board.getCell(nxAfter, nyAfter) == cell) continue;
-
+			if (_board.getCell(nxBefore, nyBefore) == 0) {
+				if (_board.getCell(nxAfter, nyAfter) == 0) {
+					continue;
+				}
+			}
 			return true; // Point is capturable
 			}
 	}
