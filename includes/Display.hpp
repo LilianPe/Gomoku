@@ -6,6 +6,12 @@
 #include <string>
 #include <SFML/Graphics.hpp>
 
+enum GameState {
+    MENU,
+    PLAYING,
+    GAME_OVER
+};
+
 class Display {
 
 	public:
@@ -16,18 +22,23 @@ class Display {
 
 		const Board getBoard(void) const;
 		const Game getGame(void) const;
+		GameState getState(void) const;
 		void open(void);
 		
-		private: 
+		private:
 		Board _board;
 		Game _game;
+		GameState _state;
 		const int _cellSize = 40;
 		const int _gridSize = SIZE;
 		
 		void _drawGrid(sf::RenderWindow& window);
 		void _drawPieces(sf::RenderWindow& window);
 		void _drawScores(sf::RenderWindow& window, int windowSize, sf::Font& Font);
+		void _handleMove(sf::Event& event);
+		void _handleMenu(sf::Event& event, sf::RenderWindow& window, int windowSize);
 		void _handleButtons(sf::RenderWindow& window, sf::Event& event, int windowSize);
+		void _displayMenu(sf::RenderWindow& window, sf::Font& font, int windowSize);
 		void _displayEndScreen(sf::RenderWindow& window, sf::Font& font, int windowSize);
 		void _playMove(int x, int y, int player);
 		void _updateBoard(sf::RenderWindow& window, int windowSize, sf::Font& font);

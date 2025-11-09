@@ -1,10 +1,10 @@
 #include "Display.hpp"
 
-Display::Display(void) : _board(Board()), _game(Game(_board)) {}
+Display::Display(void) : _board(Board()), _game(Game(_board)), _state(MENU) {}
 
-Display::Display(Board board) : _board(board), _game(Game(_board)) {}
+Display::Display(Board board) : _board(board), _game(Game(_board)), _state(MENU) {}
 
-Display::Display(const Display& other) : _board(other.getBoard()), _game(other.getGame()) {}
+Display::Display(const Display& other) : _board(other.getBoard()), _game(other.getGame()), _state(other.getState()) {}
 
 Display::~Display() {}
 
@@ -16,19 +16,28 @@ const Game Display::getGame(void) const {
 	return _game;
 }
 
+GameState Display::getState(void) const {
+	return _state;
+}
+
 void Display::open(void) {
 	int windowSize = _cellSize * _gridSize;
 	sf::RenderWindow window(sf::VideoMode(windowSize, windowSize), "Gomoku", sf::Style::Close);
 	sf::Font font;
     font.loadFromFile("assets/arial.ttf");
 	while (window.isOpen()) {
-        _handleEvents(window, windowSize);
-		_updateBoard(window, windowSize, font);
-		if (_game.getEnd()) {
-            _displayEndScreen(window, font, windowSize);
+        if (_state == MENU) {
+            _displayMenu(window, font, windowSize);
         }
-
-        _displayShadow(window);
+        else {
+            if (_game.getEnd()) _state = GAME_OVER;
+            _updateBoard(window, windowSize, font);
+            if (_state == GAME_OVER) {
+                _displayEndScreen(window, font, windowSize);
+            }
+            _displayShadow(window);
+        }
+        _handleEvents(window, windowSize);
         window.display();
     }
 }
@@ -39,29 +48,56 @@ void Display::_handleEvents(sf::RenderWindow& window, int windowSize) {
         if (event.type == sf::Event::Closed) {
             window.close();
         }
-        
-		if (_game.getEnd()) {
+        else if (_state == PLAYING) {
+            _handleMove(event);
+        }
+		else if (_state == GAME_OVER) {
             _handleButtons(window, event, windowSize);
             continue; // empêche de jouer pendant l’écran de fin
         }
+        else if (_state == MENU) {
+            _handleMenu(event, window, windowSize);
+        }
         
-		if (event.type == sf::Event::MouseButtonPressed) {
-            int x = event.mouseButton.x / _cellSize;
-            int y = event.mouseButton.y / _cellSize;
-            if (event.mouseButton.button == sf::Mouse::Left) {
-                if (_game.moveIsValid(x, y, 1)) {
-                    _playMove(x, y, 1);
-				}
-            } 
-            else if (event.mouseButton.button == sf::Mouse::Right) {
-                if (_game.moveIsValid(x, y, 2)) {
-                    _playMove(x, y, 2);
-				}
-            }
+    }
+}
+
+void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int windowSize) {
+    if (event.type == sf::Event::MouseButtonPressed) {
+        int mouseX = event.mouseButton.x;
+        int mouseY = event.mouseButton.y;
+
+        // Bouton "Jouer"
+        if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
+            mouseY > windowSize / 2 && mouseY < windowSize / 2 + 60) {
+            _game.restart();
+            _state = PLAYING;
+        }
+
+        // Bouton "Quitter"
+        if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
+            mouseY > windowSize / 2 + 100 && mouseY < windowSize / 2 + 160) {
+            window.close();
         }
     }
 }
 
+void Display::_handleMove(sf::Event& event) {
+    if (event.type == sf::Event::MouseButtonPressed) {
+        int x = event.mouseButton.x / _cellSize;
+        int y = event.mouseButton.y / _cellSize;
+        if (event.mouseButton.button == sf::Mouse::Left) {
+            if (_game.moveIsValid(x, y, 1)) {
+                _playMove(x, y, 1);
+            }
+        } 
+        else if (event.mouseButton.button == sf::Mouse::Right) {
+            if (_game.moveIsValid(x, y, 2)) {
+                _playMove(x, y, 2);
+            }
+        }
+    }
+}
 
 void Display::_handleButtons(sf::RenderWindow& window, sf::Event& event, int windowSize) {
     if (event.type == sf::Event::MouseButtonPressed) {
@@ -71,6 +107,7 @@ void Display::_handleButtons(sf::RenderWindow& window, sf::Event& event, int win
         if (mouseX > windowSize/2 - 100 && mouseX < windowSize/2 + 100 &&
             mouseY > windowSize/2 && mouseY < windowSize/2 + 50) {
                 _game.restart();
+                _state = PLAYING;
             }
             // Button "Leave"
             else if (mouseX > windowSize/2 - 100 && mouseX < windowSize/2 + 100 &&
@@ -78,6 +115,43 @@ void Display::_handleButtons(sf::RenderWindow& window, sf::Event& event, int win
             window.close();
         }
     }
+}
+
+void centerText(sf::Text& text, float x, float y) {
+    sf::FloatRect bounds = text.getLocalBounds();
+    text.setOrigin(bounds.left + bounds.width / 2.0f,
+                   bounds.top + bounds.height / 2.0f);
+    text.setPosition(x, y);
+}
+
+void Display::_displayMenu(sf::RenderWindow& window, sf::Font& font, int windowSize) {
+    window.clear(sf::Color(240, 217, 181));
+    sf::Text title("GOMOKU", font, 80);
+    title.setFillColor(sf::Color::Black);
+    centerText(title, windowSize / 2, windowSize / 4);
+    window.draw(title);
+
+    // Bouton Jouer
+    sf::RectangleShape playButton(sf::Vector2f(200, 60));
+    playButton.setPosition(windowSize / 2 - 100, windowSize / 2);
+    playButton.setFillColor(sf::Color(100, 200, 100));
+    window.draw(playButton);
+
+    sf::Text playText("Play", font, 30);
+    playText.setFillColor(sf::Color::Black);
+    centerText(playText, windowSize / 2, windowSize / 2 + 30);
+    window.draw(playText);
+
+    // Bouton Quitter
+    sf::RectangleShape quitButton(sf::Vector2f(200, 60));
+    quitButton.setPosition(windowSize / 2 - 100, windowSize / 2 + 100);
+    quitButton.setFillColor(sf::Color(200, 100, 100));
+    window.draw(quitButton);
+
+    sf::Text quitText("Quit", font, 30);
+    quitText.setFillColor(sf::Color::Black);
+    centerText(quitText, windowSize / 2, windowSize / 2 + 130);
+    window.draw(quitText);
 }
 
 void Display::_displayEndScreen(sf::RenderWindow& window, sf::Font& font, int windowSize) {
@@ -117,7 +191,7 @@ void Display::_drawReplayButton(sf::RenderWindow& window, sf::Font& font, int wi
     
     sf::Text replayText("Play again", font, 24);
     replayText.setFillColor(sf::Color::Black);
-    replayText.setPosition(windowSize / 2 - 55, windowSize / 2 + 10);
+    centerText(replayText, windowSize / 2, windowSize / 2 + 25);
     window.draw(replayText);
 }
 
@@ -127,9 +201,9 @@ void Display::_drawLeavesButton(sf::RenderWindow& window, sf::Font& font, int wi
     quitButton.setFillColor(sf::Color(200, 100, 100));
     window.draw(quitButton);
 
-    sf::Text quitText("Quitter", font, 24);
+    sf::Text quitText("Quit", font, 24);
     quitText.setFillColor(sf::Color::Black);
-    quitText.setPosition(windowSize / 2 - 45, windowSize / 2 + 80);
+    centerText(quitText, windowSize / 2, windowSize / 2 + 95);
     window.draw(quitText);
 }
 
