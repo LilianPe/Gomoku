@@ -75,16 +75,21 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
         // Bouton "Player vs Player"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 - 100 && mouseY < windowSize / 2 - 40) {
+            _game.getPlayer1().setType("Player");
+            _game.getPlayer2().setType("Player");
             _game.restart();
             _state = PLAYING;
+            _game.launch();
         }
 
         // Bouton "Player vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 && mouseY < windowSize / 2 + 60) {
+            _game.getPlayer2().setType("Player");
             _game.getPlayer2().setType("AI");
             _game.restart();
             _state = PLAYING;
+            _game.launch();
         }
         // Bouton "IA vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
@@ -93,6 +98,7 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setType("AI");
             _game.restart();
             _state = PLAYING;
+            _game.launch();
         }
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 + 200 && mouseY < windowSize / 2 + 260) {

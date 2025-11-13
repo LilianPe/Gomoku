@@ -47,6 +47,23 @@ void Game::displayBoard(void) {
 	getBoard().display();
 }
 
+void Game::launch() {
+	if (getCurrentPlayer().getType() == "AI") {
+		auto [x, y] = _agent.play();
+		getBoard().setCell(x, y, getCurrentTurn());
+		updateState(x, y);
+		if (getEnd()) {
+			try {
+				std::cout << "Winner :" << getWinner().getName() << std::endl; 
+			}
+			catch (const std::logic_error& e) {
+				std::cout << "Error: " << e.what() << std::endl;
+			}
+		}
+		nextTurn();
+	}
+}
+
 void Game::nextTurn(void) {
 	if (_currentTurn == 1) {
 		_currentTurn = 2;
@@ -64,6 +81,7 @@ void Game::nextTurn(void) {
 			catch (const std::logic_error& e) {
 				std::cout << "Error: " << e.what() << std::endl;
 			}
+			return ;
 		}
 		nextTurn();
 	}
