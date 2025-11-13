@@ -9,7 +9,8 @@ Game::Game(std::shared_ptr<Board> board) :
 	_currentTurn(1),
 	_winner(0),
 	_end(false),
-	_endReason("") {}
+	_endReason(""),
+	_agent(Agent(*this)) {}
 
 Game::Game(std::shared_ptr<Board> board, Player player1, Player player2) : 
 	_player1(player1),
@@ -18,9 +19,18 @@ Game::Game(std::shared_ptr<Board> board, Player player1, Player player2) :
 	_currentTurn(1),
 	_winner(0),
 	_end(false),
-	_endReason("") {}
+	_endReason(""),
+	_agent(Agent(*this)) {}
 
-Game::Game(const Game& other) : _player1(Player(other._player1)), _player2(Player(other._player2)), _board(std::make_shared<Board>(*other._board)), _currentTurn(other.getCurrentTurn()) {}
+Game::Game(const Game& other) :
+	_player1(Player(other._player1)),
+	_player2(Player(other._player2)),
+	_board(std::make_shared<Board>(*other._board)),
+	_currentTurn(other.getCurrentTurn()),
+	_winner(other.getWinnerId()),
+	_end(other.getEnd()),
+	_endReason(other.getEndReason()),
+	_agent(other.getAgent()) {}
 
 Game::~Game() {}
 
@@ -43,6 +53,20 @@ void Game::nextTurn(void) {
 	} else {
 		_currentTurn = 1;
 	}
+	if (getCurrentPlayer().getType() == "AI") {
+		auto [x, y] = _agent.play();
+        getBoard().setCell(x, y, getCurrentTurn());
+		updateState(x, y);
+		if (getEnd()) {
+			try {
+				std::cout << "Winner :" << getWinner().getName() << std::endl; 
+			}
+			catch (const std::logic_error& e) {
+				std::cout << "Error: " << e.what() << std::endl;
+			}
+		}
+		nextTurn();
+	}
 }
 
 bool Game::moveIsValid(int x, int y, int p) {
@@ -56,7 +80,7 @@ bool Game::moveIsValid(int x, int y, int p) {
 }
 
 void Game::updateState(int x, int y) {
-	displayBoard();
+	// displayBoard();
 	for (int k = 0; k < SIZE; k++) {
 		for (int j = 0; j < SIZE; j++) {
 			if (getBoard().getCell(k, j) != 0 && !_end) { // Optimization to check only occupied cells
@@ -334,16 +358,29 @@ const Board& Game::getBoard(void) const {
 	return *_board;
 }
 
-bool Game::getEnd(void) {
+bool Game::getEnd(void) const {
 	return _end;
 }
 
-std::string Game::getEndReason(void) {
+std::string Game::getEndReason(void) const {
 	return _endReason;
 }
 
-Player Game::getWinner(void) {
+int Game::getWinnerId(void) const {
+	return _winner;
+}
+
+Player Game::getWinner(void) const {
 	if (_winner == 1) return _player1;
 	else if (_winner == 2) return _player2;
 	else throw std::logic_error("No winner!");
+}
+
+Agent Game::getAgent(void) const {
+	return _agent;
+}
+
+Player Game::getCurrentPlayer(void) const {
+	if (_currentTurn == 1) return _player1;
+	else return _player2;
 }

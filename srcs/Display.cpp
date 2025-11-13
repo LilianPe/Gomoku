@@ -74,20 +74,26 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
 
         // Bouton "Player vs Player"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
-            mouseY > windowSize / 2 && mouseY < windowSize / 2 + 60) {
+            mouseY > windowSize / 2 - 100 && mouseY < windowSize / 2 - 40) {
             _game.restart();
             _state = PLAYING;
         }
 
         // Bouton "Player vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
-            mouseY > windowSize / 2 + 100 && mouseY < windowSize / 2 + 160) {
-            _game.getPlayer1().setType("IA");
+            mouseY > windowSize / 2 && mouseY < windowSize / 2 + 60) {
+            _game.getPlayer2().setType("AI");
             _game.restart();
             _state = PLAYING;
-            // window.close();
         }
         // Bouton "IA vs IA"
+        if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
+            mouseY > windowSize / 2 + 100 && mouseY < windowSize / 2 + 160) {
+            _game.getPlayer1().setType("AI");
+            _game.getPlayer2().setType("AI");
+            _game.restart();
+            _state = PLAYING;
+        }
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 + 200 && mouseY < windowSize / 2 + 260) {
             window.close();
@@ -100,17 +106,17 @@ void Display::_handleMove(sf::Event& event) {
         int x = event.mouseButton.x / _cellSize;
         int y = event.mouseButton.y / _cellSize;
         if (event.mouseButton.button == sf::Mouse::Left) {
-            if (_game.moveIsValid(x, y, 1) && _game.getPlayer1().getType() == "Player") {
+            if (_game.getPlayer1().getType() == "Player" && _game.moveIsValid(x, y, 1)) {
                 _playMove(x, y, 1);
             }
-            if (_game.getPlayer1().getType() == "IA") {
-                Agent agent = Agent(_game);
-                auto [x, y] = agent.play();
-                _playMove(x, y, 1);
-            }
+            // if (_game.getPlayer1().getType() == "IA") {
+            //     Agent agent = Agent(_game);
+            //     auto [x, y] = agent.play();
+            //     _playMove(x, y, 1);
+            // }
         }
         else if (event.mouseButton.button == sf::Mouse::Right) {
-            if (_game.moveIsValid(x, y, 2) && _game.getPlayer2().getType() == "Player") {
+            if (_game.getPlayer2().getType() == "Player" && _game.moveIsValid(x, y, 2) && _game.getPlayer2().getType() == "Player") {
                 _playMove(x, y, 2);
             }
         }
@@ -150,35 +156,47 @@ void Display::_displayMenu(sf::RenderWindow& window, sf::Font& font, int windowS
 
     // Bouton Jouer avec Joueur
     sf::RectangleShape playButton(sf::Vector2f(300, 60));
-    playButton.setPosition(windowSize / 2 - 150, windowSize / 2);
+    playButton.setPosition(windowSize / 2 - 150, windowSize / 2 - 100);
     playButton.setFillColor(sf::Color(100, 200, 100));
     window.draw(playButton);
 
     sf::Text playText("Player vs Player", font, 30);
     playText.setFillColor(sf::Color::Black);
-    centerText(playText, windowSize / 2, windowSize / 2 + 30);
+    centerText(playText, windowSize / 2, windowSize / 2 - 70);
     window.draw(playText);
 
     // Bouton Jouer avec IA
     sf::RectangleShape playButton2(sf::Vector2f(300, 60));
-    playButton2.setPosition(windowSize / 2 - 150, windowSize / 2 + 100);
+    playButton2.setPosition(windowSize / 2 - 150, windowSize / 2);
     playButton2.setFillColor(sf::Color(100, 200, 100));
     window.draw(playButton2);
-
+    
     sf::Text playText2("Player vs IA", font, 30);
     playText2.setFillColor(sf::Color::Black);
-    centerText(playText2, windowSize / 2, windowSize / 2 + 130);
+    centerText(playText2, windowSize / 2, windowSize / 2 + 30);
     window.draw(playText2);
-
+    
+    // Bouton Jouer IA vs IA
     sf::RectangleShape playButton3(sf::Vector2f(300, 60));
-    playButton3.setPosition(windowSize / 2 - 150, windowSize / 2 + 200);
+    playButton3.setPosition(windowSize / 2 - 150, windowSize / 2 + 100);
     playButton3.setFillColor(sf::Color(100, 200, 100));
     window.draw(playButton3);
-
+    
     sf::Text playText3("IA vs IA", font, 30);
     playText3.setFillColor(sf::Color::Black);
-    centerText(playText3, windowSize / 2, windowSize / 2 + 230);
+    centerText(playText3, windowSize / 2, windowSize / 2 + 130);
     window.draw(playText3);
+    
+    // Bouton Jouer Leave
+    sf::RectangleShape playButton4(sf::Vector2f(300, 60));
+    playButton4.setPosition(windowSize / 2 - 150, windowSize / 2 + 200);
+    playButton4.setFillColor(sf::Color(200, 100, 100));
+    window.draw(playButton4);
+
+    sf::Text playText4("Quit", font, 30);
+    playText4.setFillColor(sf::Color::Black);
+    centerText(playText4, windowSize / 2, windowSize / 2 + 230);
+    window.draw(playText4);
 }
 
 void Display::_displayEndScreen(sf::RenderWindow& window, sf::Font& font, int windowSize) {

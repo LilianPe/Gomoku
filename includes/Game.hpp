@@ -2,10 +2,9 @@
 # define GAME_HPP
 # include "Player.hpp"
 # include "Board.hpp"
+# include "Agent.hpp"
 # include <string>
 # include <memory>
-
-class Agent;
 
 class Game{
 
@@ -26,9 +25,12 @@ class Game{
 		Player& getPlayer2(void);
 		Board& getBoard(void);
 		const Board& getBoard(void) const;
-		bool getEnd(void);
-		std::string getEndReason(void);
-		Player getWinner(void);
+		bool getEnd(void) const;
+		std::string getEndReason(void) const;
+		int getWinnerId(void) const;
+		Player getWinner(void) const;
+		Agent getAgent(void) const;
+		Player getCurrentPlayer(void) const;
 
 	private:
 		void _checkFive(int x, int y);
@@ -44,6 +46,7 @@ class Game{
 		int _winner;
 		bool _end;
 		std::string _endReason;
+		Agent _agent;
 };
 
 #endif

@@ -2,6 +2,7 @@
 # define DISPLAY_HPP
 # include "Board.hpp"
 # include "Game.hpp"
+// # include "Agent.hpp"
 #include <sstream>
 #include <string>
 #include <SFML/Graphics.hpp>

@@ -2,7 +2,7 @@
 # include "Player.hpp"
 # include "Game.hpp"
 
-Agent::Agent(Game &game) : _game(game) {}
+Agent::Agent(Game &game) : _game(&game) {}
 Agent::~Agent() {}
 
 std::vector<Move> Agent::getAvailableMoves(Game& game) {
@@ -14,12 +14,12 @@ std::vector<Move> Agent::getAvailableMoves(Game& game) {
 			}
 		}
 	}
-    game.getBoard().display();
+    // game.getBoard().display();
 	return moves;
 }
 
 bool Agent::checkEnd(Game& game, int x, int y) {
-	_game.updateState(x , y); // Placeholder implementation
+	getGameCopy().updateState(x , y); // Placeholder implementation
 	if (game.getEnd()) {
 		return true;
 	}
@@ -105,7 +105,7 @@ int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta,
 
 // --- play() : version qui retourne le meilleur coup ---
 std::pair<int, int> Agent::play() {
-    std::vector<Move> moves = getAvailableMoves(_game);
+    std::vector<Move> moves = getAvailableMoves(getGame());
     if (moves.empty()) return {-1, -1};  // plus de coups
     int bestScore = -2000000;
     Move bestMove = moves[0];
@@ -113,7 +113,7 @@ std::pair<int, int> Agent::play() {
     const int depth = 1;  // Ajuste selon ton jeu
 
     for (const Move& move : moves) {
-        Game temp = _game;
+        Game temp = getGameCopy();
         temp.getBoard().setCell(move.x, move.y, 1);  // AI joue
 
         int score = minimax(temp, depth - 1, false,
@@ -126,7 +126,16 @@ std::pair<int, int> Agent::play() {
     }
 
     // Appliquer le meilleur coup sur le vrai jeu
-    // _game.getBoard().setCell(bestMove.x, bestMove.y, 1);
+    // getGameCopy().getBoard().setCell(bestMove.x, bestMove.y, 1);
     printf("x : %d, y : %d\n", bestMove.x, bestMove.y);
     return {bestMove.x, bestMove.y};
+}
+
+
+Game& Agent::getGame(void) const {
+    return *_game;
+}
+
+Game Agent::getGameCopy(void) const {
+    return *_game;
 }
