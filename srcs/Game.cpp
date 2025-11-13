@@ -1,4 +1,5 @@
 #include "Game.hpp"
+# include "Board.hpp"
 
 Game::Game(Board& board) :
 	_player1(Player("Player1")),
@@ -18,7 +19,7 @@ Game::Game(Board& board, Player player1, Player player2) :
 	_end(false),
 	_endReason("") {}
 
-// Game::Game(const Game& other) : _player1(other.getPlayer1()), _player2(other.getPlayer2()), _board(other.getBoard()), _currentTurn(other.getCurrentTurn()) {}
+// Game::Game(const Game& other) : _player1(Player(other._player1)), _player2(Player(other._player2)), _board(Board(other.getBoard())), _currentTurn(other.getCurrentTurn()), _end(other.getEnd()) {}
 
 Game::~Game() {}
 
