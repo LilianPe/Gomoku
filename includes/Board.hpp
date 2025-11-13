@@ -15,7 +15,7 @@ class Board {
 
 		void display(void);
 		void clear(void);
-		int getCell(int x, int y);
+		int getCell(int x, int y) const;
 		void setCell(int x, int y, int value);
 		const std::vector<std::vector<int>> getBoard(void) const;
 		

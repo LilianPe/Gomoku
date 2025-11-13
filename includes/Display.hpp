@@ -20,13 +20,14 @@ class Display {
 		Display(const Display& other);
 		~Display();
 
-		const Board getBoard(void) const;
+		Board& getBoard(void);
+		const Board& getBoard(void) const;
 		const Game getGame(void) const;
 		GameState getState(void) const;
 		void open(void);
 		
 		private:
-		Board _board;
+		std::shared_ptr<Board>  _board;
 		Game _game;
 		GameState _state;
 		const int _cellSize = 40;

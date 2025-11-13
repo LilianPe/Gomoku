@@ -3,14 +3,15 @@
 # include "Player.hpp"
 # include "Board.hpp"
 # include <string>
+# include <memory>
 
 class Agent;
 
 class Game{
 
 	public:
-		Game(Board& board);
-		Game(Board& board, Player player1, Player player2);
+		Game(std::shared_ptr<Board> Board);
+		Game(std::shared_ptr<Board> Board, Player player1, Player player2);
 		Game(const Game& other);
 		~Game();
 
@@ -38,7 +39,7 @@ class Game{
 
 		Player _player1;
 		Player _player2;
-		Board _board;
+		std::shared_ptr<Board> _board;
 		int _currentTurn;
 		int _winner;
 		bool _end;

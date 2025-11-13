@@ -2,7 +2,13 @@
 
 Board::Board(void) : _board(SIZE, std::vector<int>(SIZE, 0)) {}
 
-Board::Board(const Board& other) : _board(other.getBoard()) {}
+Board::Board(const Board& other) : _board(SIZE, std::vector<int>(SIZE, 0)){
+	for (int y = 0; y < SIZE; y++) {
+		for (int x = 0; x < SIZE; x++) {
+			_board[y][x] = other.getCell(x, y);
+		}
+	}
+}
 
 Board::~Board() {}
 
@@ -19,7 +25,7 @@ void Board::clear(void) {
 	_board = std::vector<std::vector<int>>(SIZE, std::vector<int>(SIZE, 0));
 }
 
-int Board::getCell(int x, int y) {
+int Board::getCell(int x, int y) const {
 	return _board[y][x];
 }
 

@@ -1,16 +1,20 @@
 #include "Display.hpp"
 #include "Agent.hpp"
 
-Display::Display(void) : _board(Board()), _game(Game(_board)), _state(MENU) {}
+Display::Display(void) : _board(std::make_shared<Board>()), _game(Game(_board)), _state(MENU) {}
 
-Display::Display(Board board) : _board(board), _game(Game(_board)), _state(MENU) {}
+Display::Display(Board board) : _board(std::make_shared<Board>(board)), _game(Game(_board)), _state(MENU) {}
 
-Display::Display(const Display& other) : _board(other.getBoard()), _game(other.getGame()), _state(other.getState()) {}
+Display::Display(const Display& other) : _board(std::make_shared<Board>(other.getBoard())), _game(other.getGame()), _state(other.getState()) {}
 
 Display::~Display() {}
 
-const Board Display::getBoard(void) const {
-	return _board;
+Board& Display::getBoard(void) {
+	return *_board;
+}
+
+const Board& Display::getBoard(void) const {
+	return *_board;
 }
 
 const Game Display::getGame(void) const {
@@ -235,7 +239,7 @@ void Display::_displayShadow(sf::RenderWindow& window) {
     int hoverX = mousePos.x / _cellSize;
     int hoverY = mousePos.y / _cellSize;
     if (hoverX >= 0 && hoverX < _gridSize && hoverY >= 0 && hoverY < _gridSize) {
-        if (_board.getCell(hoverX, hoverY) == 0 && !_game.getEnd()) {
+        if (getBoard().getCell(hoverX, hoverY) == 0 && !_game.getEnd()) {
             int currentPlayer = _game.getCurrentTurn();
             sf::Color color = (currentPlayer == 1)
                 ? sf::Color(0, 0, 0, 100)
@@ -252,7 +256,7 @@ void Display::_displayShadow(sf::RenderWindow& window) {
 }
 
 void Display::_playMove(int x, int y, int player) {
-    _board.setCell(x, y, player);
+    getBoard().setCell(x, y, player);
 	_game.updateState(x, y);
 	if (_game.getEnd()) {
         try {
@@ -294,7 +298,7 @@ void Display::_drawGrid(sf::RenderWindow& window) {
 void Display::_drawPieces(sf::RenderWindow& window) {
 	for (int y = 0; y < _gridSize; y++) {
 		for (int x = 0; x < _gridSize; x++) {
-			int cell = _board.getCell(x, y); // 0 = vide, 1 = noir, 2 = blanc
+			int cell = getBoard().getCell(x, y); // 0 = vide, 1 = noir, 2 = blanc
 			if (cell == 0)
 				continue;
 
