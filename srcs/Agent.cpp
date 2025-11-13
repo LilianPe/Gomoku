@@ -28,10 +28,31 @@ bool Agent::checkEnd(Game& game, int x, int y) {
 
 int Agent::evaluateBoard(Game& game, int lastX, int lastY) {
     if (lastX != -1 && lastY != -1 && checkEnd(game, lastX, lastY)) {
-        if (game.getBoard().getCell(lastX, lastY) == 1) return +10000;  // AI gagne
-        if (game.getBoard().getCell(lastX, lastY) == 2) return -10000;  // Adversaire gagne
+        if (game.getBoard().getCell(lastX, lastY) == 1) return + 1'000'000;  // AI gagne
+        if (game.getBoard().getCell(lastX, lastY) == 2) return - 1'000'000;  // Adversaire gagne
     }
     if (getAvailableMoves(game).empty()) return 0;  // Match nul
+
+
+    // Features (weight):
+	// - allignement de 4 sans pion autour (100 000)
+	// - allignement de 4 avec 1 pion qui bloque 1 cote (100)
+	// - allignement de 3 avec 0 bloque (100)
+	// - allignement de 3 avec 1 bloque (10)
+	// - allignement de 2 avec 0 bloque (5)
+	// - allignement de 2 avec 1 bloque (1)
+	// - captures (300)
+	// - pions capturables (100)
+	// -- A ajouter potentiellement: 
+	// -- Position de chaque pion par rapport au bord
+	// --> pour chaque pion, feature += distance du bord le plus proche (weight -0.25-1)
+	// -- Densite des pions (Insite a creer des groupe)
+	// --> Genre pour chaque pion, si autour, il y a (XOX) -> +1 (weight 1-5) (prendre en compte que ce schemas sera compte 2 fois / occurence, diviser feature / 2) 
+	// --- Inclure dans les alignements les schemas suivants:
+	// 
+	// 
+	std::vector<int> features;
+	std::vector<int> weights;
 
     // Heuristique simple (à remplacer par une vraie)
     int score = 0;
