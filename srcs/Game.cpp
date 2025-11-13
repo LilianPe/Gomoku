@@ -1,9 +1,10 @@
 #include "Game.hpp"
 # include "Board.hpp"
+# include "Agent.hpp"
 
 Game::Game(Board& board) :
-	_player1(Player("Player1")),
-	_player2(Player("Player2")),
+	_player1(Player("Player1", "Player")),
+	_player2(Player("Player2", "Player")),
 	_board(board),
 	_currentTurn(1),
 	_winner(0),
@@ -19,7 +20,7 @@ Game::Game(Board& board, Player player1, Player player2) :
 	_end(false),
 	_endReason("") {}
 
-// Game::Game(const Game& other) : _player1(Player(other._player1)), _player2(Player(other._player2)), _board(Board(other.getBoard())), _currentTurn(other.getCurrentTurn()), _end(other.getEnd()) {}
+Game::Game(const Game& other) : _player1(Player(other._player1)), _player2(Player(other._player2)), _board(other.getBoard()), _currentTurn(other.getCurrentTurn()) {}
 
 Game::~Game() {}
 
@@ -316,11 +317,11 @@ int Game::getCurrentTurn(void) const {
 	return _currentTurn;
 }
 
-const Player Game::getPlayer1(void) const {
+Player& Game::getPlayer1(void) {
 	return _player1;
 }
 
-const Player Game::getPlayer2(void) const {
+Player& Game::getPlayer2(void) {
 	return _player2;
 }
 

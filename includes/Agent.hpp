@@ -7,18 +7,16 @@
 # include "Board.hpp"
 # include "Game.hpp"
 
-constexpr int SIZE = 19;
+struct Move;
 
 struct Move {
 	int x, y;
 };
 
-class Agent : public Player {
+class Agent {
 
 	public:
-		Agent(std::string name, Game game);
-		Agent(std::string name, int score, int captures, Game game);
-		Agent(const Player& other, Game game);
+		Agent(Game& game);
 		~Agent();
 		std::pair<int, int> play(void);
 

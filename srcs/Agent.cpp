@@ -1,9 +1,8 @@
 # include "Agent.hpp"
 # include "Player.hpp"
+# include "Game.hpp"
 
-Agent::Agent(std::string name, Game game) : Player(name), _game(game) {}
-Agent::Agent(std::string name, int score, int captures, Game game) : Player(name, score, captures), _game(game) {}
-Agent::Agent(const Player& other, Game game) : Player(other), _game(game) {}
+Agent::Agent(Game &game) : _game(game) {}
 Agent::~Agent() {}
 
 std::vector<Move> Agent::getAvailableMoves(Game& game) {
@@ -15,6 +14,7 @@ std::vector<Move> Agent::getAvailableMoves(Game& game) {
 			}
 		}
 	}
+    game.getBoard().display();
 	return moves;
 }
 
@@ -86,11 +86,10 @@ int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta,
 std::pair<int, int> Agent::play() {
     std::vector<Move> moves = getAvailableMoves(_game);
     if (moves.empty()) return {-1, -1};  // plus de coups
-
     int bestScore = -2000000;
     Move bestMove = moves[0];
 
-    const int depth = 8;  // Ajuste selon ton jeu
+    const int depth = 1;  // Ajuste selon ton jeu
 
     for (const Move& move : moves) {
         Game temp = _game;
@@ -107,6 +106,6 @@ std::pair<int, int> Agent::play() {
 
     // Appliquer le meilleur coup sur le vrai jeu
     // _game.getBoard().setCell(bestMove.x, bestMove.y, 1);
-
+    printf("x : %d, y : %d\n", bestMove.x, bestMove.y);
     return {bestMove.x, bestMove.y};
 }

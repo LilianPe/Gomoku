@@ -4,12 +4,14 @@
 # include "Board.hpp"
 # include <string>
 
+class Agent;
+
 class Game{
 
 	public:
 		Game(Board& board);
 		Game(Board& board, Player player1, Player player2);
-		// Game(const Game& other);
+		Game(const Game& other);
 		~Game();
 
 		void restart(void);
@@ -19,14 +21,14 @@ class Game{
 		void updateState(int x, int y);
 
 		int getCurrentTurn(void) const;
-		const Player getPlayer1(void) const;
-		const Player getPlayer2(void) const;
+		Player& getPlayer1(void);
+		Player& getPlayer2(void);
 		Board& getBoard(void);
 		const Board& getBoard(void) const;
 		bool getEnd(void);
 		std::string getEndReason(void);
 		Player getWinner(void);
-	
+
 	private:
 		void _checkFive(int x, int y);
 		void _checkDoubleThree(int x, int y);
@@ -36,7 +38,7 @@ class Game{
 
 		Player _player1;
 		Player _player2;
-		Board& _board;
+		Board _board;
 		int _currentTurn;
 		int _winner;
 		bool _end;

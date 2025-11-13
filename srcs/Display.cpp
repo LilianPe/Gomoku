@@ -1,4 +1,5 @@
 #include "Display.hpp"
+#include "Agent.hpp"
 
 Display::Display(void) : _board(Board()), _game(Game(_board)), _state(MENU) {}
 
@@ -77,7 +78,10 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
         // Bouton "Player vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 + 100 && mouseY < windowSize / 2 + 160) {
-            window.close();
+            _game.getPlayer1().setType("IA");
+            _game.restart();
+            _state = PLAYING;
+            // window.close();
         }
         // Bouton "IA vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
@@ -92,12 +96,17 @@ void Display::_handleMove(sf::Event& event) {
         int x = event.mouseButton.x / _cellSize;
         int y = event.mouseButton.y / _cellSize;
         if (event.mouseButton.button == sf::Mouse::Left) {
-            if (_game.moveIsValid(x, y, 1)) {
+            if (_game.moveIsValid(x, y, 1) && _game.getPlayer1().getType() == "Player") {
                 _playMove(x, y, 1);
             }
-        } 
+            if (_game.getPlayer1().getType() == "IA") {
+                Agent agent = Agent(_game);
+                auto [x, y] = agent.play();
+                _playMove(x, y, 1);
+            }
+        }
         else if (event.mouseButton.button == sf::Mouse::Right) {
-            if (_game.moveIsValid(x, y, 2)) {
+            if (_game.moveIsValid(x, y, 2) && _game.getPlayer2().getType() == "Player") {
                 _playMove(x, y, 2);
             }
         }

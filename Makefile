@@ -12,8 +12,8 @@ SFML_TAR = libs/SFML-2.6.1-linux-gcc-64-bit.tar.gz
 SFML_INC = -I$(SFML)/include
 SFML_LIB = -L$(SFML)/lib -lsfml-graphics -lsfml-window -lsfml-system
 
-SRC_FILES = main Board Game Player Display
-INC_FILES = Gomoku Board Game Player Display
+SRC_FILES = main Board Game Player Display Agent
+INC_FILES = Gomoku Board Game Player Display Agent
 TEMPLATE_FILES = 
 
 INC	= $(addprefix $(INC_DIR), $(addsuffix .hpp, $(INC_FILES)))

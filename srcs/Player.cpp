@@ -1,13 +1,22 @@
 #include "Player.hpp"
 
 Player::Player(void) : _name("Player"), _score(0), _captures(0) {}
-Player::Player(std::string name) : _name(name), _score(0), _captures(0) {}
+Player::Player(std::string name, std::string type) : _name(name), _type(type), _score(0), _captures(0) {}
 Player::Player(std::string name, int score, int captures) : _name(name), _score(score), _captures(captures) {}
-Player::Player(const Player& other) : _name(other.getName()), _score(other.getScore()), _captures(other.getCaptures()) {}
+Player::Player(const Player& other) : _name(other.getName()), _type(other.getType()), _score(other.getScore()), _captures(other.getCaptures()) {}
 Player::~Player() {}
 
 const std::string Player::getName() const {
 	return _name;
+}
+
+const std::string Player::getType() const {
+	return _type;
+}
+
+void Player::setType(std::string newType) {
+	printf("Type modified ! NewType : %s\n", newType.c_str());
+	_type = newType;
 }
 
 int Player::getScore() const {
