@@ -5,17 +5,33 @@
 Agent::Agent(Game &game) : _game(&game) {}
 Agent::~Agent() {}
 
+
+// --- getAvailableMoves() : retourne la liste des coups possibles(ne prend que les coups proches de pions existants pour optimiser) ---
 std::vector<Move> Agent::getAvailableMoves(Game& game) {
-	std::vector<Move> moves;
-	for (int y = 0; y < SIZE; y++) {
-		for (int x = 0; x < SIZE; x++) {
-			if (game.getBoard().getCell(x, y) == 0) {
-				moves.push_back(Move{x, y});
-			}
-		}
-	}
-    // game.getBoard().display();
-	return moves;
+    std::vector<Move> moves;
+
+    for (int y = 0; y < SIZE; y++) {
+        for (int x = 0; x < SIZE; x++) {
+
+            if (game.getBoard().getCell(x, y) != 0) continue;
+
+            bool relevant = false;
+
+            for (int dy = -2; dy <= 2 && !relevant; dy++) {
+                for (int dx = -2; dx <= 2 && !relevant; dx++) {
+                    int nx = x + dx;
+                    int ny = y + dy;
+                    if (nx < 0 || ny < 0 || nx >= SIZE || ny >= SIZE) continue;
+                    if (game.getBoard().getCell(nx, ny) != 0)
+                        relevant = true;
+                }
+            }
+
+            if (relevant)
+                moves.push_back({x, y});
+        }
+    }
+    return moves;
 }
 
 bool Agent::checkEnd(Game& game, int x, int y) {
@@ -110,7 +126,7 @@ std::pair<int, int> Agent::play() {
     int bestScore = -2000000;
     Move bestMove = moves[0];
 
-    const int depth = 1;  // Ajuste selon ton jeu
+    const int depth = 2;  // Ajuste selon ton jeu
 
     for (const Move& move : moves) {
         Game temp = getGameCopy();
@@ -124,9 +140,6 @@ std::pair<int, int> Agent::play() {
             bestMove = move;
         }
     }
-
-    // Appliquer le meilleur coup sur le vrai jeu
-    // getGameCopy().getBoard().setCell(bestMove.x, bestMove.y, 1);
     printf("x : %d, y : %d\n", bestMove.x, bestMove.y);
     return {bestMove.x, bestMove.y};
 }
