@@ -28,7 +28,8 @@ class Agent {
 		std::vector<Move> getAvailableMoves(Game& game);
 		int evaluateBoard(Game& game , int lastX=-1, int lastY=-1);
 		int minimax(Game game, int depth, bool isMaximizing, int alpha, int beta, int x=-1, int y=-1);
-		int _get_n_capturable(Game& game, const std::vector<std::pair<int, int>>& points);
+		int _get_n_capturable(Game& game, int playerInd);
+		void _setAllignmentFeatures(Game& game, std::vector<int>& features, int playerId);
 		bool checkEnd(Game& game, int x, int y);
 		bool _isInLimit(int x, int y);
 		Game* _game;

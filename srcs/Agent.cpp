@@ -43,9 +43,10 @@ bool Agent::checkEnd(Game& game, int x, int y) {
 }
 
 int Agent::evaluateBoard(Game& game, int lastX, int lastY) {
-    int player_ind = 1; // Definir player en fonction de quel player appelle l'agent
+    int playerInd = 1; // Definir player en fonction de quel player appelle l'agent
+    int ennemyInd = (playerInd == 1) ? 0 : 1;
     if (lastX != -1 && lastY != -1 && checkEnd(game, lastX, lastY)) {
-        if (game.getBoard().getCell(lastX, lastY) == player_ind) return + 1'000'000;  // AI gagne
+        if (game.getBoard().getCell(lastX, lastY) == playerInd) return + 1'000'000;  // AI gagne
         else return - 1'000'000;  // Adversaire gagne
     }
     if (getAvailableMoves(game).empty()) return 0;  // Match nul
@@ -58,6 +59,7 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY) {
 	// - allignement de 3 avec 1 bloque (10) | X
 	// - allignement de 2 avec 0 bloque (5) | X
 	// - allignement de 2 avec 1 bloque (1) | X
+	// - peut etre prendre en compte les allignements de 5 et +, si un est mangeable | X
 	// - captures (300) | V
 	// - pions capturables (100) | V
     //
@@ -73,34 +75,71 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY) {
 	std::vector<int> features;
 	std::vector<int> weights;
 
-    // Heuristique simple (à remplacer par une vraie)
     int score = 0;
     std::vector<int> weight = {100'000, 100, 100, 10, 5, 1, 300, 100};
-    std::vector<int> features = {0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<int> playerFeatures = {0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<int> ennemyFeatures = {0, 0, 0, 0, 0, 0, 0, 0};
 
     // set les features d'allignement
+    _setAllignmentFeatures(game, playerFeatures, playerInd);
+    _setAllignmentFeatures(game, ennemyFeatures, ennemyInd);
 
-    // captures:
-    Player player = (player_ind == 1) ? game.getPlayer1() : game.getPlayer2();
-    features[6] = player.getCaptures();
+    // captures
+    Player player = (playerInd == 1) ? game.getPlayer1() : game.getPlayer2();
+    Player ennemy = (ennemyInd == 1) ? game.getPlayer1() : game.getPlayer2();
+    playerFeatures[6] = player.getCaptures();
+    ennemyFeatures[6] = ennemy.getCaptures();
 
-    // captures possibles
-    std::vector<std::pair<int, int>> points;
-	for (int x = 0; x < SIZE; x++){
-		for (int y = 0; y < SIZE; y++) {
-			if (game.getBoard().getCell(x, y) == player_ind)
-				points.push_back({x, y});
-		}
-	}
-	features[7] = _get_n_capturable(game, points);
-    for (int i = 0; i < features.size(); i++) {
-        score += features[i] * weight[i];
+    //  possible captures
+	playerFeatures[7] = _get_n_capturable(game, playerInd);
+	ennemyFeatures[7] = _get_n_capturable(game, ennemyInd);
+
+    // Calculating score
+    for (long unsigned int i = 0; i < features.size(); i++) {
+        score += playerFeatures[i] * weight[i];
+        score -= ennemyFeatures[i] * weight[i];
     }
     return score;
 }
 
-int Agent::_get_n_capturable(Game& game, const std::vector<std::pair<int, int>>& points) {
-	int captures = 0;
+void Agent::_setAllignmentFeatures(Game& game, std::vector<int>& features, int playerId) {
+    (void) features;
+    std::vector<std::pair<int, int>> directions = {
+		{1, 0},
+		{1, 1},
+		{0, 1},
+		{-1, 1}
+	};
+    for (int y = 0; y < SIZE; y++) {
+        for (int x = 0; x < SIZE; x++) {
+            for (auto [dx, dy]: directions) {
+                if ((game.getBoard().getCell(x, y) == playerId)
+                    && ((!_isInLimit(x - dx, y - dy)) || (game.getBoard().getCell(x - dx, y - dy) != playerId))) {
+                        // Ici, on est dans un allignement unique, plus qu'a trouver le type d'allignement, incrementer features[i] correspondant a cet allignement
+                        int i = 1;
+                        // int size = 1;
+                        while (1) {
+                            if (!_isInLimit(x + i * dx, y + i * dy) || game.getBoard().getCell(x + i * dx, y + i * dy) != playerId) {
+                                // Si hole == 0: hole = 1 et continur, sinon, break: plus de 2 trous, allignement finit, detecter si 2 trous d'affile, car allignement avec trou != sans trou
+                            }
+                            break;
+                            i++;
+                        }
+                }
+            }
+        }
+    }
+}
+
+int Agent::_get_n_capturable(Game& game, int playerInd) {
+	std::vector<std::pair<int, int>> points;
+	for (int x = 0; x < SIZE; x++){
+		for (int y = 0; y < SIZE; y++) {
+			if (game.getBoard().getCell(x, y) == playerInd)
+				points.push_back({x, y});
+		}
+	}
+    int captures = 0;
     for (const auto& [x, y] : points) {
 		int cell = game.getBoard().getCell(x, y);
 		std::vector<std::pair<int, int>> directions = {
