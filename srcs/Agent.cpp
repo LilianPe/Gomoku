@@ -17,8 +17,8 @@ std::vector<Move> Agent::getAvailableMoves(Game& game) {
 
             bool relevant = false;
 
-            for (int dy = -2; dy <= 2 && !relevant; dy++) {
-                for (int dx = -2; dx <= 2 && !relevant; dx++) {
+            for (int dy = -1; dy <= 1 && !relevant; dy++) {
+                for (int dx = -1; dx <= 1 && !relevant; dx++) {
                     int nx = x + dx;
                     int ny = y + dy;
                     if (nx < 0 || ny < 0 || nx >= SIZE || ny >= SIZE) continue;
