@@ -43,22 +43,25 @@ bool Agent::checkEnd(Game& game, int x, int y) {
 }
 
 int Agent::evaluateBoard(Game& game, int lastX, int lastY) {
+    int player_ind = 1; // Definir player en fonction de quel player appelle l'agent
     if (lastX != -1 && lastY != -1 && checkEnd(game, lastX, lastY)) {
-        if (game.getBoard().getCell(lastX, lastY) == 1) return + 1'000'000;  // AI gagne
-        if (game.getBoard().getCell(lastX, lastY) == 2) return - 1'000'000;  // Adversaire gagne
+        if (game.getBoard().getCell(lastX, lastY) == player_ind) return + 1'000'000;  // AI gagne
+        else return - 1'000'000;  // Adversaire gagne
     }
     if (getAvailableMoves(game).empty()) return 0;  // Match nul
 
 
     // Features (weight):
-	// - allignement de 4 sans pion autour (100 000)
-	// - allignement de 4 avec 1 pion qui bloque 1 cote (100)
-	// - allignement de 3 avec 0 bloque (100)
-	// - allignement de 3 avec 1 bloque (10)
-	// - allignement de 2 avec 0 bloque (5)
-	// - allignement de 2 avec 1 bloque (1)
-	// - captures (300)
-	// - pions capturables (100)
+	// - allignement de 4 sans pion autour (100 000) | X
+	// - allignement de 4 avec 1 pion qui bloque 1 cote (100) | X
+	// - allignement de 3 avec 0 bloque (100) | X
+	// - allignement de 3 avec 1 bloque (10) | X
+	// - allignement de 2 avec 0 bloque (5) | X
+	// - allignement de 2 avec 1 bloque (1) | X
+	// - captures (300) | V
+	// - pions capturables (100) | V
+    //
+    //
 	// -- A ajouter potentiellement: 
 	// -- Position de chaque pion par rapport au bord
 	// --> pour chaque pion, feature += distance du bord le plus proche (weight -0.25-1)
@@ -72,15 +75,70 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY) {
 
     // Heuristique simple (à remplacer par une vraie)
     int score = 0;
-    // Exemple : +1 par pion AI, -1 par pion adversaire
-    for (int i = 0; i < SIZE; ++i) {
-        for (int j = 0; j < SIZE; ++j) {
-            int cell = game.getBoard().getCell(i, j);
-            if (cell == 1) score += 1;
-            if (cell == 2) score -= 1;
-        }
+    std::vector<int> weight = {100'000, 100, 100, 10, 5, 1, 300, 100};
+    std::vector<int> features = {0, 0, 0, 0, 0, 0, 0, 0};
+
+    // set les features d'allignement
+
+    // captures:
+    Player player = (player_ind == 1) ? game.getPlayer1() : game.getPlayer2();
+    features[6] = player.getCaptures();
+
+    // captures possibles
+    std::vector<std::pair<int, int>> points;
+	for (int x = 0; x < SIZE; x++){
+		for (int y = 0; y < SIZE; y++) {
+			if (game.getBoard().getCell(x, y) == player_ind)
+				points.push_back({x, y});
+		}
+	}
+	features[7] = _get_n_capturable(game, points);
+    for (int i = 0; i < features.size(); i++) {
+        score += features[i] * weight[i];
     }
     return score;
+}
+
+int Agent::_get_n_capturable(Game& game, const std::vector<std::pair<int, int>>& points) {
+	int captures = 0;
+    for (const auto& [x, y] : points) {
+		int cell = game.getBoard().getCell(x, y);
+		std::vector<std::pair<int, int>> directions = {
+			{1, 0},
+			{1, 1},
+			{0, 1},
+			{-1, 1},
+			{-1, 0},
+			{-1, -1},
+			{0, -1},
+			{1, -1}
+		};
+		for (auto [dx, dy] : directions) {
+			int x1 = x + dx;
+			int y1 = y + dy;
+			int nxBefore = x - dx;
+            int nyBefore = y - dy;
+            int nxAfter  = x + 2 * dx;
+            int nyAfter  = y + 2 * dy;
+			if (!_isInLimit(x1, y1)) continue; // is in tab
+			if (game.getBoard().getCell(x1, y1) != cell) continue; // has ally cell around
+
+	
+			if (!_isInLimit(nxBefore, nyBefore) || !_isInLimit(nxAfter, nyAfter)) continue;
+			if (game.getBoard().getCell(nxBefore, nyBefore) == cell || game.getBoard().getCell(nxAfter, nyAfter) == cell) continue;
+			if (game.getBoard().getCell(nxBefore, nyBefore) == 0) {
+				if (game.getBoard().getCell(nxAfter, nyAfter) == 0) {
+					continue;
+				}
+			}
+			captures++; // Point is capturable
+			}
+	}
+	return captures;
+}
+
+bool Agent::_isInLimit(int x, int y) {
+	return (x >= 0 && x < SIZE && y >= 0 && y < SIZE);
 }
 
 int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta, int lastX, int lastY) {
