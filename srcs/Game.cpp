@@ -147,7 +147,7 @@ void Game::_checkFive(int x, int y) {
 			count++;
 		}
 		if (count >= 5 && !_areCapturables(aligned_points)) {
-			printf("ENDING");
+			// printf("ENDING");
 			_end = true;
 			_winner = cell;
 			_endReason = "5 pawns aligned.";

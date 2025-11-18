@@ -35,7 +35,7 @@ std::vector<Move> Agent::getAvailableMoves(Game& game) {
 }
 
 bool Agent::checkEnd(Game& game, int x, int y) {
-	getGameCopy().updateState(x , y); // Placeholder implementation
+	game.updateState(x , y); // Placeholder implementation
 	if (game.getEnd()) {
 		return true;
 	}
@@ -46,8 +46,8 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY, int id) {
     int playerInd = id; // Definir player en fonction de quel player appelle l'agent
     int ennemyInd = (playerInd == 1) ? 2 : 1;
     if (lastX != -1 && lastY != -1 && checkEnd(game, lastX, lastY)) {
-        if (game.getBoard().getCell(lastX, lastY) == playerInd) return + 1'000'000;  // AI gagne
-        else return - 1'000'000;  // Adversaire gagne
+        if (game.getWinner().getId() == playerInd) return + 1'000'000;  // AI gagne
+        else return (-1'000'000);  // Adversaire gagne
     }
     if (getAvailableMoves(game).empty()) return 0;  // Match nul
 
