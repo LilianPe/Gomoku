@@ -36,3 +36,12 @@ void Board::setCell(int x, int y, int value) {
 const std::vector<std::vector<int>> Board::getBoard(void) const {
 	return _board;
 }
+
+uint64_t Board::getBoardHash(void) {
+    std::string s;
+    s.reserve(361);
+    for (int y = 0; y < SIZE; y++)
+        for (int x = 0; x < SIZE; x++)
+            s += char(getCell(x, y));  // 0,1,2 → caractères différents
+    return std::hash<std::string>{}(s);
+}

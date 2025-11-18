@@ -18,6 +18,7 @@ class Board {
 		int getCell(int x, int y) const;
 		void setCell(int x, int y, int value);
 		const std::vector<std::vector<int>> getBoard(void) const;
+		uint64_t getBoardHash(void);
 		
 	private: 
 		std::vector<std::vector<int>> _board;

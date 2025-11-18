@@ -2,7 +2,9 @@
 # include "Player.hpp"
 # include "Game.hpp"
 
-Agent::Agent(Game &game) : _game(&game) {}
+Agent::Agent(Game &game) : _game(&game) {
+    // _transpoTable.reserve(5'000'000);
+}
 Agent::~Agent() {}
 
 
@@ -232,8 +234,25 @@ bool Agent::_isInLimit(int x, int y) {
 	return (x >= 0 && x < SIZE && y >= 0 && y < SIZE);
 }
 
-int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta, int lastX, int lastY, int id) {
+int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta, int lastX, int lastY, int id) {
     // Note : on passe Game par VALEUR (copie) pour éviter undo
+    uint64_t boardKey = game.getBoard().getBoardHash();
+    auto it = _transpoTable.find(boardKey);
+    if (it != _transpoTable.end() && it->second.depth >= depth) {
+        auto& entry = it->second;
+        if (entry.flag == TTFlag::EXACT) {
+            // std::cout << "User TT!! key : " << boardKey << std::endl;
+            return it->second.score;
+        }
+        else if (entry.flag == TTFlag::LOWERBOUND && entry.score >= beta) {
+            // std::cout << "User TT!! key : " << boardKey << std::endl;
+            return it->second.score;
+        }
+        else if (entry.flag == TTFlag::UPPERBOUND && entry.score <= alpha) {
+            // std::cout << "User TT!! key : " << boardKey << std::endl;
+            return it->second.score;
+        }
+    }
 
     bool hasLastMove = (lastX != -1 && lastY != -1);
     bool gameOver = hasLastMove && checkEnd(game, lastX, lastY);
@@ -241,32 +260,56 @@ int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta,
     int ennemyId = (id == 1) ? 2 : 1;
 
     if (depth == 0 || gameOver || moves.empty()) {
-        return evaluateBoard(game, lastX, lastY, id);
+        int score = evaluateBoard(game, lastX, lastY, id);
+        _updateTable(game, TTFlag::EXACT, score, depth);
+        return score;
     }
 
+    int origAlpha = alpha;
     if (isMaximizing) {
         int maxEval = -2000000;
         for (const Move& move : moves) {
-            Game temp = game;
-            temp.getBoard().setCell(move.x, move.y, id);
-            int eval = minimax(temp, depth - 1, false, alpha, beta, move.x, move.y, id);
+            game.getBoard().setCell(move.x, move.y, id);
+            int eval = minimax(game, depth - 1, false, alpha, beta, move.x, move.y, id);
+            game.getBoard().setCell(move.x, move.y, 0);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
-            if (beta <= alpha) break;
+            if (beta <= alpha) {
+                break ;
+            };
         }
+        TTFlag flag = (maxEval <= origAlpha) ? TTFlag::UPPERBOUND : (maxEval >= beta) ? TTFlag::LOWERBOUND : TTFlag::EXACT;
+        _updateTable(game, flag, maxEval, depth);
         return maxEval;
     } else {
         int minEval = 2000000;
         for (const Move& move : moves) {
-            Game temp = game;
-            temp.getBoard().setCell(move.x, move.y, ennemyId);
-            int eval = minimax(temp, depth - 1, true, alpha, beta, move.x, move.y, id);
+            game.getBoard().setCell(move.x, move.y, ennemyId);
+            int eval = minimax(game, depth - 1, true, alpha, beta, move.x, move.y, id);
+            game.getBoard().setCell(move.x, move.y, 0);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
-            if (beta <= alpha) break;
+            if (beta <= alpha) {
+                break;
+            }
         }
+        TTFlag flag = (minEval <= origAlpha) ? TTFlag::UPPERBOUND : (minEval >= beta) ? TTFlag::LOWERBOUND : TTFlag::EXACT;
+        _updateTable(game, flag, minEval, depth);
         return minEval;
     }
+}
+
+void Agent::_updateTable(Game& game, TTFlag flag, int score, int depth) {
+    uint64_t hash = game.getBoard().getBoardHash();
+    auto it = _transpoTable.find(hash);
+    if (it != _transpoTable.end() && it->second.depth > depth) {
+        return ;
+    }
+    TTValue value;
+    value.score = score;
+    value.depth = depth;
+    value.flag = flag;
+    _transpoTable[hash] = value;
 }
 
 // --- play() : version qui retourne le meilleur coup ---
@@ -276,7 +319,7 @@ std::pair<int, int> Agent::play() {
     int bestScore = -2000000;
     Move bestMove = moves[0];
 
-    const int depth = 2;  // Ajuste selon ton jeu
+    const int depth = 6;  // Ajuste selon ton jeu
 
     for (const Move& move : moves) {
         Game temp = getGameCopy();
