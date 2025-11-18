@@ -15,6 +15,8 @@ class Player {
 		const std::string getType() const;
 		void setType(std::string newType);
 		int getScore() const;
+		int getId() const;
+		void setId(int newId);
 		int getCaptures() const;
 		void incrementCaptures(int n);
 		void resetCaptures();
@@ -24,6 +26,7 @@ class Player {
 		std::string _type;
 		int _score;
 		int _captures;
+		int _id;
 };
 
 #endif

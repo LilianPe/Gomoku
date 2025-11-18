@@ -76,7 +76,9 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 - 100 && mouseY < windowSize / 2 - 40) {
             _game.getPlayer1().setType("Player");
+            _game.getPlayer1().setId(1);
             _game.getPlayer2().setType("Player");
+            _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
             _game.launch();
@@ -86,7 +88,9 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 && mouseY < windowSize / 2 + 60) {
             _game.getPlayer2().setType("Player");
+            _game.getPlayer1().setId(1);
             _game.getPlayer2().setType("AI");
+            _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
             _game.launch();
@@ -95,7 +99,9 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 + 100 && mouseY < windowSize / 2 + 160) {
             _game.getPlayer1().setType("AI");
+            _game.getPlayer1().setId(1);
             _game.getPlayer2().setType("AI");
+            _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
             _game.launch();
