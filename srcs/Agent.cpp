@@ -76,23 +76,23 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY) {
 	std::vector<int> weights;
 
     int score = 0;
-    std::vector<int> weight = {100'000, 100, 100, 10, 5, 1, 300, 100};
-    std::vector<int> playerFeatures = {0, 0, 0, 0, 0, 0, 0, 0};
-    std::vector<int> ennemyFeatures = {0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<int> weight = {1, 300, 100};
+    std::vector<int> playerFeatures = {0, 0, 0};
+    std::vector<int> ennemyFeatures = {0, 0, 0};
 
     // set les features d'allignement
-    _setAllignmentFeatures(game, playerFeatures, playerInd);
-    _setAllignmentFeatures(game, ennemyFeatures, ennemyInd);
+    playerFeatures[0] =  _getAllignmentFeatures(game,playerInd);
+    ennemyFeatures[0] = _getAllignmentFeatures(game, ennemyInd);
 
     // captures
     Player player = (playerInd == 1) ? game.getPlayer1() : game.getPlayer2();
     Player ennemy = (ennemyInd == 1) ? game.getPlayer1() : game.getPlayer2();
-    playerFeatures[6] = player.getCaptures();
-    ennemyFeatures[6] = ennemy.getCaptures();
+    playerFeatures[1] = player.getCaptures();
+    ennemyFeatures[1] = ennemy.getCaptures();
 
     //  possible captures
-	playerFeatures[7] = _get_n_capturable(game, playerInd);
-	ennemyFeatures[7] = _get_n_capturable(game, ennemyInd);
+	playerFeatures[2] = _get_n_capturable(game, playerInd);
+	ennemyFeatures[2] = _get_n_capturable(game, ennemyInd);
 
     // Calculating score
     for (long unsigned int i = 0; i < features.size(); i++) {
@@ -102,14 +102,14 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY) {
     return score;
 }
 
-void Agent::_setAllignmentFeatures(Game& game, std::vector<int>& features, int playerId) {
-    (void) features;
+int Agent::_getAllignmentFeatures(Game& game, int playerId) {
     std::vector<std::pair<int, int>> directions = {
 		{1, 0},
 		{1, 1},
 		{0, 1},
 		{-1, 1}
 	};
+    int score = 0;
     for (int y = 0; y < SIZE; y++) {
         for (int x = 0; x < SIZE; x++) {
             for (auto [dx, dy]: directions) {
@@ -117,18 +117,70 @@ void Agent::_setAllignmentFeatures(Game& game, std::vector<int>& features, int p
                     && ((!_isInLimit(x - dx, y - dy)) || (game.getBoard().getCell(x - dx, y - dy) != playerId))) {
                         // Ici, on est dans un allignement unique, plus qu'a trouver le type d'allignement, incrementer features[i] correspondant a cet allignement
                         int i = 1;
-                        // int size = 1;
+                        int size = 1;
+                        int closed = 0;
+                        bool hole = false;
+                        int cell = 0;
+                        if (!_isInLimit(x - dx, y - dy) || game.getBoard().getCell(x - dx, y - dy) != 0) {
+                            closed++;
+                        }
                         while (1) {
-                            if (!_isInLimit(x + i * dx, y + i * dy) || game.getBoard().getCell(x + i * dx, y + i * dy) != playerId) {
-                                // Si hole == 0: hole = 1 et continur, sinon, break: plus de 2 trous, allignement finit, detecter si 2 trous d'affile, car allignement avec trou != sans trou
+                            if (!_isInLimit(x + i * dx, y + i * dy)) {
+                                closed++;
+                                break ;
                             }
-                            break;
+                            cell = game.getBoard().getCell(x + i * dx, y + i * dy);
+                            if (cell != playerId) {
+                                // Si hole == 0: hole = 1 et continur, sinon, break: plus de 2 trous, allignement finit, detecter si 2 trous d'affile, car allignement avec trou != sans trou
+                                if (cell == 0) {
+                                    if (!_isInLimit(x + (i + 1) * dx, y + (i + 1) * dy)) {
+                                        break ;
+                                    }
+                                    int nextCell = game.getBoard().getCell(x + (i + 1) * dx, y + (i + 1) * dy);
+                                    if (nextCell == 0) {
+                                        break ;
+                                    }
+                                    else if (nextCell == playerId) {
+                                        if (hole) {
+                                            break ;
+                                        }
+                                        else {
+                                            hole = true;
+                                            i++;
+                                            continue ;
+                                        }
+                                    }
+                                    else {
+                                        break ;
+                                    }
+                                }
+                                else {
+                                    closed++;
+                                    break ;
+                                }
+                            }
+                            else {
+                                size++;
+                            }
                             i++;
                         }
+                        // Ici, on a toutes les infos necessaires, taille de l'allignement, si il comporte un trou, si il est ferme de 1 ou 2 cote ou pas, 
+                        score += _getAllignementValue(size, closed, hole);
                 }
             }
         }
     }
+    return score;
+}
+
+int Agent::_getAllignementValue(int size, int closed, bool hole) {
+    float closedWeights[3] = {1.0f, 0.01f, 0.0f};
+    int sizePoints[5] = {0, 0, 5, 100, 100'000};
+
+    float holeWeight = hole ? 1.2f : 1.0f;
+    int sizePoint = size >= 5 ? 100'000 : sizePoints[size];
+
+    return sizePoint * closedWeights[closed] * holeWeight;
 }
 
 int Agent::_get_n_capturable(Game& game, int playerInd) {
@@ -237,7 +289,7 @@ std::pair<int, int> Agent::play() {
             bestMove = move;
         }
     }
-    printf("x : %d, y : %d\n", bestMove.x, bestMove.y);
+    printf("x : %d, y : %d | score: %d\n", bestMove.x, bestMove.y, bestScore);
     return {bestMove.x, bestMove.y};
 }
 
