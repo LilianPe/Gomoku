@@ -368,6 +368,10 @@ Player& Game::getPlayer2(void) {
 	return _player2;
 }
 
+void Game::setBoard(Board& board) {
+	*_board = board;
+}
+
 Board& Game::getBoard(void) {
 	return *_board;
 }
@@ -380,12 +384,20 @@ bool Game::getEnd(void) const {
 	return _end;
 }
 
+void Game::setEnd(bool end) {
+	_end = end;
+}
+
 std::string Game::getEndReason(void) const {
 	return _endReason;
 }
 
 int Game::getWinnerId(void) const {
 	return _winner;
+}
+
+void Game::setWinnerId(int id) {
+	_winner = id;
 }
 
 Player Game::getWinner(void) const {

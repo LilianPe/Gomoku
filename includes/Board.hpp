@@ -2,7 +2,8 @@
 # define BOARD_HPP
 # include <vector>
 # include <string>
-# include <iostream> 
+# include <iostream>
+# include <cstdint>
 
 constexpr int SIZE = 19;
 
@@ -11,6 +12,7 @@ class Board {
 	public:
 		Board(void);
 		Board(const Board& other);
+		Board& operator=(const Board& other); 
 		~Board();
 
 		void display(void);

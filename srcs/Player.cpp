@@ -35,6 +35,10 @@ int Player::getCaptures() const {
 	return _captures;
 }
 
+void Player::setCaptures(int captures) {
+	_captures = captures;
+}
+
 void Player::incrementCaptures(int n) {
 	_captures += n;;
 }

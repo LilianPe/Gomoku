@@ -10,6 +10,18 @@ Board::Board(const Board& other) : _board(SIZE, std::vector<int>(SIZE, 0)){
 	}
 }
 
+Board& Board::operator=(const Board& other) {
+	if (this == &other) {
+        return *this;
+    }
+	for (int y = 0; y < SIZE; y++) {
+		for (int x = 0; x < SIZE; x++) {
+			_board[y][x] = other.getCell(x, y);
+		}
+	}
+	return *this;
+} 
+
 Board::~Board() {}
 
 void Board::display(void) {

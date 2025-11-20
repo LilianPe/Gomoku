@@ -25,10 +25,13 @@ class Game{
 		Player& getPlayer1(void);
 		Player& getPlayer2(void);
 		Board& getBoard(void);
+		void setBoard(Board& board);
 		const Board& getBoard(void) const;
+		void setEnd(bool end);
 		bool getEnd(void) const;
 		std::string getEndReason(void) const;
 		int getWinnerId(void) const;
+		void setWinnerId(int id);
 		Player getWinner(void) const;
 		Agent getAgent(void) const;
 		Player getCurrentPlayer(void) const;

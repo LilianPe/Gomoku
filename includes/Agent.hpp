@@ -3,7 +3,8 @@
 # include <vector>
 # include <unordered_map>
 # include <string>
-# include <iostream> 
+# include <iostream>
+# include <cstdint>
 # include "Player.hpp"
 # include "Board.hpp"
 // # include "Game.hpp"
@@ -47,6 +48,7 @@ class Agent {
 		bool checkEnd(Game& game, int x, int y);
 		bool _isInLimit(int x, int y);
 		void _updateTable(Game& game, TTFlag flag, int score, int depth);
+		void _restoreGameValue(Game& game, Move& move, int origPlayer1Captures, int origPlayer2Captures, Board board);
 		std::unordered_map<uint64_t, TTValue> _transpoTable;
 		Game* _game;
 };

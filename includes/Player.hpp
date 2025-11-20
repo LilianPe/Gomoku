@@ -18,6 +18,7 @@ class Player {
 		int getId() const;
 		void setId(int newId);
 		int getCaptures() const;
+		void setCaptures(int captures);
 		void incrementCaptures(int n);
 		void resetCaptures();
 

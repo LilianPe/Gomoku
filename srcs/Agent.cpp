@@ -266,12 +266,16 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
     }
 
     int origAlpha = alpha;
+    int origPlayer1Captures = game.getPlayer1().getCaptures();
+    int origPlayer2Captures = game.getPlayer2().getCaptures();
+    Board origBoard = Board(game.getBoard());
     if (isMaximizing) {
         int maxEval = -2000000;
-        for (const Move& move : moves) {
+        for (Move& move : moves) {
             game.getBoard().setCell(move.x, move.y, id);
             int eval = minimax(game, depth - 1, false, alpha, beta, move.x, move.y, id);
-            game.getBoard().setCell(move.x, move.y, 0);
+            // game.getBoard().setCell(move.x, move.y, 0);
+            _restoreGameValue(game, move, origPlayer1Captures, origPlayer2Captures, origBoard);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
             if (beta <= alpha) {
@@ -283,10 +287,11 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
         return maxEval;
     } else {
         int minEval = 2000000;
-        for (const Move& move : moves) {
+        for (Move& move : moves) {
             game.getBoard().setCell(move.x, move.y, ennemyId);
             int eval = minimax(game, depth - 1, true, alpha, beta, move.x, move.y, id);
-            game.getBoard().setCell(move.x, move.y, 0);
+            // game.getBoard().setCell(move.x, move.y, 0);
+            _restoreGameValue(game, move, origPlayer1Captures, origPlayer2Captures, origBoard);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
             if (beta <= alpha) {
@@ -297,6 +302,15 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
         _updateTable(game, flag, minEval, depth);
         return minEval;
     }
+}
+
+void Agent::_restoreGameValue(Game& game, Move& move, int origPlayer1Captures, int origPlayer2Captures, Board board) {
+    game.setEnd(false);
+    game.getPlayer1().setCaptures(origPlayer1Captures);
+    game.getPlayer2().setCaptures(origPlayer2Captures);
+    game.getBoard().setCell(move.x, move.y, 0);
+    game.setWinnerId(0);
+    game.setBoard(board);
 }
 
 void Agent::_updateTable(Game& game, TTFlag flag, int score, int depth) {
@@ -318,15 +332,19 @@ std::pair<int, int> Agent::play() {
     if (moves.empty()) return {-1, -1};  // plus de coups
     int bestScore = -2000000;
     Move bestMove = moves[0];
-
-    const int depth = 6;  // Ajuste selon ton jeu
-
-    for (const Move& move : moves) {
-        Game temp = getGameCopy();
-        temp.getBoard().setCell(move.x, move.y, temp.getCurrentPlayer().getId());  // AI joue
-
+    
+    const int depth = 4;  // Ajuste selon ton jeu
+    
+    int currentPlayer = getGame().getCurrentPlayer().getId();
+    Game temp = getGameCopy();
+    int origPlayer1Captures = temp.getPlayer1().getCaptures();
+    int origPlayer2Captures = temp.getPlayer2().getCaptures();
+    Board origBoard = Board(temp.getBoard());
+    for (Move& move : moves) {
+        temp.getBoard().setCell(move.x, move.y, currentPlayer);  // AI joue
         int score = minimax(temp, depth - 1, false,
-                            -2000000, 2000000, move.x, move.y, temp.getCurrentPlayer().getId());
+            -2000000, 2000000, move.x, move.y, currentPlayer);
+        _restoreGameValue(temp, move, origPlayer1Captures, origPlayer2Captures, origBoard);
         if (score > bestScore) {
             bestScore = score;
             bestMove = move;
