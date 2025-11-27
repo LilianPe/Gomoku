@@ -47,9 +47,11 @@ class Agent {
 		int _getAllignementValue(int size, int closed, bool hole);
 		bool checkEnd(Game& game, int x, int y);
 		bool _isInLimit(int x, int y);
-		void _updateTable(Game& game, TTFlag flag, int score, int depth);
-		void _restoreGameValue(Game& game, Move& move, int origPlayer1Captures, int origPlayer2Captures, Board board);
+		void _updateTable(Game& game, TTFlag flag, int score, int depth, uint64_t hash);
+		void _restoreGameValue(Game& game, Move& move, int origPlayer1Captures, int origPlayer2Captures);
 		std::unordered_map<uint64_t, TTValue> _transpoTable;
+		std::unordered_map<uint64_t, int> _boardValues;
+		std::unordered_map<uint64_t, std::vector<Move>> _boardMoves;
 		Game* _game;
 };
 

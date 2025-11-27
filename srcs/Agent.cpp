@@ -38,6 +38,7 @@ std::vector<Move> Agent::getAvailableMoves(Game& game) {
 
 bool Agent::checkEnd(Game& game, int x, int y) {
 	game.updateState(x , y); // Placeholder implementation
+    // Ne pas appeller updateState, faire une fonction beaucoup plus rapide qui verifie uniquement les coups autour de x / y
 	if (game.getEnd()) {
 		return true;
 	}
@@ -256,26 +257,42 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
 
     bool hasLastMove = (lastX != -1 && lastY != -1);
     bool gameOver = hasLastMove && checkEnd(game, lastX, lastY);
-    std::vector<Move> moves = getAvailableMoves(game);
+    auto it2 = _boardMoves.find(boardKey);
+    std::vector<Move> moves;
+    if (it2 != _boardMoves.end()) {
+        moves = it2->second;
+    }
+    else {
+        moves = getAvailableMoves(game);
+        _boardMoves[boardKey] = moves;
+    }
     int ennemyId = (id == 1) ? 2 : 1;
 
     if (depth == 0 || gameOver || moves.empty()) {
-        int score = evaluateBoard(game, lastX, lastY, id);
-        _updateTable(game, TTFlag::EXACT, score, depth);
+        int score = 0;
+        auto it3 = _boardValues.find(boardKey);
+        if (it3 != _boardValues.end()) {
+            score = it3->second;
+        }
+        else {
+            score = evaluateBoard(game, lastX, lastY, id);
+            _boardValues[boardKey] = score;
+        }
+        _updateTable(game, TTFlag::EXACT, score, depth, boardKey);
         return score;
     }
 
     int origAlpha = alpha;
     int origPlayer1Captures = game.getPlayer1().getCaptures();
     int origPlayer2Captures = game.getPlayer2().getCaptures();
-    Board origBoard = Board(game.getBoard());
+    // Board origBoard = Board(game.getBoard());
     if (isMaximizing) {
         int maxEval = -2000000;
         for (Move& move : moves) {
             game.getBoard().setCell(move.x, move.y, id);
             int eval = minimax(game, depth - 1, false, alpha, beta, move.x, move.y, id);
             // game.getBoard().setCell(move.x, move.y, 0);
-            _restoreGameValue(game, move, origPlayer1Captures, origPlayer2Captures, origBoard);
+            _restoreGameValue(game, move, origPlayer1Captures, origPlayer2Captures);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
             if (beta <= alpha) {
@@ -283,7 +300,7 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
             };
         }
         TTFlag flag = (maxEval <= origAlpha) ? TTFlag::UPPERBOUND : (maxEval >= beta) ? TTFlag::LOWERBOUND : TTFlag::EXACT;
-        _updateTable(game, flag, maxEval, depth);
+        _updateTable(game, flag, maxEval, depth, boardKey);
         return maxEval;
     } else {
         int minEval = 2000000;
@@ -291,7 +308,7 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
             game.getBoard().setCell(move.x, move.y, ennemyId);
             int eval = minimax(game, depth - 1, true, alpha, beta, move.x, move.y, id);
             // game.getBoard().setCell(move.x, move.y, 0);
-            _restoreGameValue(game, move, origPlayer1Captures, origPlayer2Captures, origBoard);
+            _restoreGameValue(game, move, origPlayer1Captures, origPlayer2Captures);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
             if (beta <= alpha) {
@@ -299,22 +316,25 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
             }
         }
         TTFlag flag = (minEval <= origAlpha) ? TTFlag::UPPERBOUND : (minEval >= beta) ? TTFlag::LOWERBOUND : TTFlag::EXACT;
-        _updateTable(game, flag, minEval, depth);
+        _updateTable(game, flag, minEval, depth, boardKey);
         return minEval;
     }
 }
 
-void Agent::_restoreGameValue(Game& game, Move& move, int origPlayer1Captures, int origPlayer2Captures, Board board) {
+void Agent::_restoreGameValue(Game& game, Move& move, int origPlayer1Captures, int origPlayer2Captures) {
+    int captures = game.getPlayer1().getCaptures() + game.getPlayer2().getCaptures() - origPlayer1Captures - origPlayer2Captures;
     game.setEnd(false);
     game.getPlayer1().setCaptures(origPlayer1Captures);
     game.getPlayer2().setCaptures(origPlayer2Captures);
     game.getBoard().setCell(move.x, move.y, 0);
     game.setWinnerId(0);
-    game.setBoard(board);
+    game.resetCaptures(captures);
 }
 
-void Agent::_updateTable(Game& game, TTFlag flag, int score, int depth) {
-    uint64_t hash = game.getBoard().getBoardHash();
+void Agent::_updateTable(Game& game, TTFlag flag, int score, int depth, uint64_t hash) {
+    if (!hash) {
+        hash = game.getBoard().getBoardHash();
+    }
     auto it = _transpoTable.find(hash);
     if (it != _transpoTable.end() && it->second.depth > depth) {
         return ;
@@ -333,18 +353,18 @@ std::pair<int, int> Agent::play() {
     int bestScore = -2000000;
     Move bestMove = moves[0];
     
-    const int depth = 4;  // Ajuste selon ton jeu
+    const int depth = 3;  // Ajuste selon ton jeu
     
     int currentPlayer = getGame().getCurrentPlayer().getId();
     Game temp = getGameCopy();
     int origPlayer1Captures = temp.getPlayer1().getCaptures();
     int origPlayer2Captures = temp.getPlayer2().getCaptures();
-    Board origBoard = Board(temp.getBoard());
+    // Board origBoard = Board(temp.getBoard());
     for (Move& move : moves) {
         temp.getBoard().setCell(move.x, move.y, currentPlayer);  // AI joue
         int score = minimax(temp, depth - 1, false,
             -2000000, 2000000, move.x, move.y, currentPlayer);
-        _restoreGameValue(temp, move, origPlayer1Captures, origPlayer2Captures, origBoard);
+        _restoreGameValue(temp, move, origPlayer1Captures, origPlayer2Captures);
         if (score > bestScore) {
             bestScore = score;
             bestMove = move;
@@ -353,7 +373,6 @@ std::pair<int, int> Agent::play() {
     printf("x : %d, y : %d | score: %d\n", bestMove.x, bestMove.y, bestScore);
     return {bestMove.x, bestMove.y};
 }
-
 
 Game& Agent::getGame(void) const {
     return *_game;

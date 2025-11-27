@@ -6,6 +6,16 @@
 # include <string>
 # include <memory>
 
+// struct Move {
+// 	int x, y;
+// };
+
+struct Capture {
+	Move m1;
+	Move m2;
+	int index;
+};
+
 class Game{
 
 	public:
@@ -20,11 +30,13 @@ class Game{
 		void nextTurn(void);
 		bool moveIsValid(int x, int y, int p);
 		void updateState(int x, int y);
+		void resetCaptures(int n);
 
 		int getCurrentTurn(void) const;
 		Player& getPlayer1(void);
 		Player& getPlayer2(void);
 		Board& getBoard(void);
+		std::vector<Capture>& getCaptured();
 		void setBoard(Board& board);
 		const Board& getBoard(void) const;
 		void setEnd(bool end);
@@ -35,6 +47,7 @@ class Game{
 		Player getWinner(void) const;
 		Agent getAgent(void) const;
 		Player getCurrentPlayer(void) const;
+		std::vector<Move> getPlayerPawn(int x, int y);
 
 	private:
 		void _checkFive(int x, int y);
@@ -51,6 +64,7 @@ class Game{
 		bool _end;
 		std::string _endReason;
 		Agent _agent;
+		std::vector<Capture> _captured;
 };
 
 #endif

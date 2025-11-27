@@ -97,19 +97,39 @@ bool Game::moveIsValid(int x, int y, int p) {
 	return !_end;
 }
 
-void Game::updateState(int x, int y) {
-	// displayBoard();
-	for (int k = 0; k < SIZE; k++) {
-		for (int j = 0; j < SIZE; j++) {
-			if (getBoard().getCell(k, j) != 0 && !_end) { // Optimization to check only occupied cells
-				_checkFive(k, j);
+
+std::vector<Move> Game::getPlayerPawn(int x, int y) {
+	std::vector<std::pair<int, int>> directions = {
+		{1, 0},
+		{1, 1},
+		{0, 1},
+		{-1, 1},
+		{-1, 0},
+		{-1, -1},
+		{0, -1},
+		{1, -1}
+	};
+	int colour = getBoard().getCell(x, y);
+	std::vector<Move> pawns;
+	pawns.push_back({x, y});
+	for (auto [dx, dy] : directions) {
+		for (int i = 1; i < 3; i++) {
+			int x2 = x + i * dx;
+			int y2 = y + i * dy;
+			if (!_isInLimit(x2, y2)) continue;
+			if (getBoard().getCell(x2, y2) == colour) {
+				pawns.push_back({x2, y2});
 			}
 		}
 	}
-	for (int x2 = 0; x2 < SIZE; x2++) {
-		for (int y2 = 0; y2 < SIZE; y2++) {
-			_checkDoubleThree(x2, y2);
-		}
+	return pawns;
+}
+
+void Game::updateState(int x, int y) {
+	_checkFive(x, y);
+	std::vector<Move> pawns = getPlayerPawn(x, y);
+	for (Move& m : pawns) {
+		_checkDoubleThree(m.x, m.y);
 	}
 	_checkCapture(x, y);
 }
@@ -272,6 +292,9 @@ void Game::_checkCapture(int x, int y) {
 				getBoard().getCell(x3, y3) == cell) {
 				getBoard().setCell(x1, y1, 0);
 				getBoard().setCell(x2, y2, 0);
+				Move m1 = {x1, y1};
+				Move m2 = {x2, y2};
+				_captured.push_back({m1, m2, opponentCell});
 				if (cell == 1) {
 					_player1.incrementCaptures(2);
 				} else {
@@ -347,9 +370,19 @@ bool Game::_areCapturables(const std::vector<std::pair<int, int>>& points) {
 				}
 			}
 			return true; // Point is capturable
-			}
+		}
 	}
 	return false;
+}
+
+void Game::resetCaptures(int n) {
+	while (!_captured.empty() && n) {
+		n--;
+		Capture capture = _captured.back();
+		_captured.pop_back();
+		getBoard().setCell(capture.m1.x, capture.m1.y, capture.index);
+		getBoard().setCell(capture.m2.x, capture.m2.y, capture.index);
+	}
 }
 
 bool Game::_isInLimit(int x, int y) {
@@ -413,4 +446,8 @@ Agent Game::getAgent(void) const {
 Player Game::getCurrentPlayer(void) const {
 	if (_currentTurn == 1) return _player1;
 	else return _player2;
+}
+
+std::vector<Capture>& Game::getCaptured(void) {
+	return _captured;
 }
