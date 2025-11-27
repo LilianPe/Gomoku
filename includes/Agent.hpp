@@ -7,6 +7,7 @@
 # include <cstdint>
 # include "Player.hpp"
 # include "Board.hpp"
+# include <chrono>
 // # include "Game.hpp"
 
 class Game;

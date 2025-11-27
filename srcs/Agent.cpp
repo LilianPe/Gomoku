@@ -78,23 +78,17 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY, int id) {
 	std::vector<int> weights;
 
     int score = 0;
-    std::vector<int> weight = {1, 300, 100};
-    std::vector<int> playerFeatures = {0, 0, 0};
-    std::vector<int> ennemyFeatures = {0, 0, 0};
+    std::vector<int> weight = {1, 100};
+    std::vector<int> playerFeatures = {0, 0};
+    std::vector<int> ennemyFeatures = {0, 0};
 
     // set les features d'allignement
     playerFeatures[0] =  _getAllignmentFeatures(game,playerInd);
     ennemyFeatures[0] = _getAllignmentFeatures(game, ennemyInd);
 
-    // captures
-    Player player = (playerInd == 1) ? game.getPlayer1() : game.getPlayer2();
-    Player ennemy = (ennemyInd == 1) ? game.getPlayer1() : game.getPlayer2();
-    playerFeatures[1] = player.getCaptures();
-    ennemyFeatures[1] = ennemy.getCaptures();
-
     //  possible captures
-	playerFeatures[2] = _get_n_capturable(game, playerInd);
-	ennemyFeatures[2] = _get_n_capturable(game, ennemyInd);
+	playerFeatures[1] = _get_n_capturable(game, playerInd);
+	ennemyFeatures[1] = _get_n_capturable(game, ennemyInd);
 
     // Calculating score
     for (long unsigned int i = 0; i < playerFeatures.size(); i++) {
@@ -238,20 +232,24 @@ bool Agent::_isInLimit(int x, int y) {
 int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta, int lastX, int lastY, int id) {
     // Note : on passe Game par VALEUR (copie) pour éviter undo
     uint64_t boardKey = game.getBoard().getBoardHash();
+    Player player = (id == 1) ? game.getPlayer1() : game.getPlayer2();
+    Player ennemy = (id == 1) ? game.getPlayer2() : game.getPlayer1();
+    int playerCaptures = player.getCaptures();
+    int ennemyCaptures = ennemy.getCaptures();
     auto it = _transpoTable.find(boardKey);
     if (it != _transpoTable.end() && it->second.depth >= depth) {
         auto& entry = it->second;
         if (entry.flag == TTFlag::EXACT) {
             // std::cout << "User TT!! key : " << boardKey << std::endl;
-            return it->second.score;
+            return it->second.score + playerCaptures - ennemyCaptures;
         }
         else if (entry.flag == TTFlag::LOWERBOUND && entry.score >= beta) {
             // std::cout << "User TT!! key : " << boardKey << std::endl;
-            return it->second.score;
+            return it->second.score + playerCaptures - ennemyCaptures;
         }
         else if (entry.flag == TTFlag::UPPERBOUND && entry.score <= alpha) {
             // std::cout << "User TT!! key : " << boardKey << std::endl;
-            return it->second.score;
+            return it->second.score + playerCaptures - ennemyCaptures;
         }
     }
 
@@ -279,7 +277,7 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
             _boardValues[boardKey] = score;
         }
         _updateTable(game, TTFlag::EXACT, score, depth, boardKey);
-        return score;
+        return score + playerCaptures - ennemyCaptures;
     }
 
     int origAlpha = alpha;
@@ -328,7 +326,9 @@ void Agent::_restoreGameValue(Game& game, Move& move, int origPlayer1Captures, i
     game.getPlayer2().setCaptures(origPlayer2Captures);
     game.getBoard().setCell(move.x, move.y, 0);
     game.setWinnerId(0);
-    game.resetCaptures(captures);
+    if (captures) {
+        game.resetCaptures(1);
+    }
 }
 
 void Agent::_updateTable(Game& game, TTFlag flag, int score, int depth, uint64_t hash) {
@@ -353,24 +353,53 @@ std::pair<int, int> Agent::play() {
     int bestScore = -2000000;
     Move bestMove = moves[0];
     
-    const int depth = 3;  // Ajuste selon ton jeu
     
     int currentPlayer = getGame().getCurrentPlayer().getId();
     Game temp = getGameCopy();
     int origPlayer1Captures = temp.getPlayer1().getCaptures();
     int origPlayer2Captures = temp.getPlayer2().getCaptures();
     // Board origBoard = Board(temp.getBoard());
-    for (Move& move : moves) {
-        temp.getBoard().setCell(move.x, move.y, currentPlayer);  // AI joue
-        int score = minimax(temp, depth - 1, false,
-            -2000000, 2000000, move.x, move.y, currentPlayer);
-        _restoreGameValue(temp, move, origPlayer1Captures, origPlayer2Captures);
-        if (score > bestScore) {
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    int depth;
+    for (depth = 1; depth <= 10; ++depth) {
+        if (depth > 1) {
+            temp.getBoard().setCell(bestMove.x, bestMove.y, currentPlayer);
+            int score = minimax(temp, depth - 1, false, -2000000, 2000000,
+                            bestMove.x, bestMove.y, currentPlayer);
+            _restoreGameValue(temp, bestMove, origPlayer1Captures, origPlayer2Captures);
             bestScore = score;
-            bestMove = move;
         }
+        for (Move& move : moves) {
+            if (depth > 1 && move.x == bestMove.x && move.y == bestMove.y)
+                continue;
+            temp.getBoard().setCell(move.x, move.y, currentPlayer);  // AI joue
+            int score = minimax(temp, depth - 1, false,
+                -2000000, 2000000, move.x, move.y, currentPlayer);
+            _restoreGameValue(temp, move, origPlayer1Captures, origPlayer2Captures);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+            auto now = std::chrono::high_resolution_clock::now();
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(now-start).count() > 800) // 800ms max
+                break;
+            }
+            auto now = std::chrono::high_resolution_clock::now();
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(now-start).count() > 800) // 800ms max
+                break;
     }
-    printf("x : %d, y : %d | score: %d\n", bestMove.x, bestMove.y, bestScore);
+    // for (Move& move : moves) {
+    //     temp.getBoard().setCell(move.x, move.y, currentPlayer);  // AI joue
+    //     int score = minimax(temp, depth - 1, false,
+    //         -2000000, 2000000, move.x, move.y, currentPlayer);
+    //     _restoreGameValue(temp, move, origPlayer1Captures, origPlayer2Captures);
+    //     if (score > bestScore) {
+    //         bestScore = score;
+    //         bestMove = move;
+    //     }
+    // }
+    printf("x : %d, y : %d | score: %d | depth: %d\n", bestMove.x, bestMove.y, bestScore, depth);
     return {bestMove.x, bestMove.y};
 }
 
