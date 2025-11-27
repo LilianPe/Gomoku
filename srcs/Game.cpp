@@ -451,3 +451,96 @@ Player Game::getCurrentPlayer(void) const {
 std::vector<Capture>& Game::getCaptured(void) {
 	return _captured;
 }
+
+// Ajouter un bitBoard et modifier les verifications  pour chercher des patterns via bitShifting
+// Base pour set le BitBoard
+//
+// En gros, set toutes les lignes / colones / diagonales a 0
+// Puis a chaque coup, placer comme cela le pion:
+// Fait un OR entre la ligne et une ligne 0 avec 1 a la position x ou y
+// black_rows[x] |= (1u << y);
+// black_cols[y] |= (1u << x);
+
+
+// Revoir comment set les diagonales
+// int diag_index = x + y;           // de 0 à 36
+// int diag2_index = x - y;           // de 0 à 36
+// int bit_pos    = std::min(x, y);  // de 0 à 18 → parfait pour uint32_t
+
+// black_diag1[diag_index] |= (1u << bit_pos);
+
+
+
+
+
+// class BitBoard {
+//     uint32_t b_rows[19] = {0};
+//     uint32_t w_rows[19] = {0};
+//     uint32_t b_cols[19] = {0};
+//     uint32_t w_cols[19] = {0};
+//     uint32_t b_diag1[37] = {0};  // x+y
+//     uint32_t w_diag1[37] = {0};
+//     uint32_t b_diag2[37] = {0};  // x-y+18
+//     uint32_t w_diag2[37] = {0};
+
+// public:
+//     void build_from_board(int board[19][19]) {
+//         memset(b_rows, 0, sizeof(b_rows));
+//         memset(w_rows, 0, sizeof(w_rows));
+//         // etc. pour tous
+
+//         for (int x = 0; x < 19; x++) {
+//             for (int y = 0; y < 19; y++) {
+//                 uint32_t mask = (1u << y);  // bit y dans la ligne x
+
+//                 if (board[x][y] == 1) {  // noir
+//                     b_rows[x] |= mask;
+//                     b_cols[y] |= (1u << x);
+//                     b_diag1[x + y] |= (1u << std::min(x, y));
+//                     b_diag2[x - y + 18] |= (1u << std::min(x, 18 - y));
+//                 }
+//                 else if (board[x][y] == 2) {  // blanc
+//                     w_rows[x] |= mask;
+//                     w_cols[y] |= (1u << x);
+//                     w_diag1[x + y] |= (1u << std::min(x, y));
+//                     w_diag2[x - y + 18] |= (1u << std::min(x, 18 - y));
+//                 }
+//             }
+//         }
+//     }
+
+//     void place(int x, int y, int player) {
+//         uint32_t mask_row = (1u << y);
+//         uint32_t mask_col = (1u << x);
+//         uint32_t mask_d1 = (1u << std::min(x, y));
+//         uint32_t mask_d2 = (1u << std::min(x, 18 - y));
+
+//         if (player == 1) {
+//             b_rows[x] |= mask_row;
+//             b_cols[y] |= mask_col;
+//             b_diag1[x + y] |= mask_d1;
+//             b_diag2[x - y + 18] |= mask_d2;
+//         } else {
+//             w_rows[x] |= mask_row;
+//             w_cols[y] |= mask_col;
+//             w_diag1[x + y] |= mask_d1;
+//             w_diag2[x - y + 18] |= mask_d2;
+//         }
+//     }
+
+//     void remove(int x, int y, int player) {
+//         uint32_t mask_row = ~(1u << y);
+//         uint32_t mask_col = ~(1u << x);
+//         uint32_t mask_d1 = ~(1u << std::min(x, y));
+//         uint32_t mask_d2 = ~(1u << std::min(x, 18 - y));
+
+//         if (player == 1) {
+//             b_rows[x] &= mask_row;
+//             b_cols[y] &= mask_col;
+//             b_diag1[x + y] &= mask_d1;
+//             b_diag2[x - y + 18] &= mask_d2;
+//         } else {
+//             // idem pour blanc
+//         }
+//     }
+// };
