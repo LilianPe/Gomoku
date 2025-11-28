@@ -11,11 +11,15 @@ Agent::~Agent() {}
 // --- getAvailableMoves() : retourne la liste des coups possibles(ne prend que les coups proches de pions existants pour optimiser) ---
 std::vector<Move> Agent::getAvailableMoves(Game& game) {
     std::vector<Move> moves;
+    bool empty;
 
     for (int y = 0; y < SIZE; y++) {
         for (int x = 0; x < SIZE; x++) {
 
-            if (game.getBoard().getCell(x, y) != 0) continue;
+            if (game.getBoard().getCell(x, y) != 0) {
+                empty = false;
+                continue;
+            }
 
             bool relevant = false;
 
@@ -32,6 +36,9 @@ std::vector<Move> Agent::getAvailableMoves(Game& game) {
             if (relevant)
                 moves.push_back({x, y});
         }
+    }
+    if (empty) {
+        moves.push_back({9, 9});
     }
     return moves;
 }
@@ -350,6 +357,7 @@ void Agent::_updateTable(Game& game, TTFlag flag, int score, int depth, uint64_t
 std::pair<int, int> Agent::play() {
     std::vector<Move> moves = getAvailableMoves(getGame());
     if (moves.empty()) return {-1, -1};  // plus de coups
+    if (moves.size() == 1) return {moves[0].x, moves[0].y};
     int bestScore = -2000000;
     Move bestMove = moves[0];
     

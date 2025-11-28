@@ -30,7 +30,7 @@ Game::Game(const Game& other) :
 	_winner(other.getWinnerId()),
 	_end(other.getEnd()),
 	_endReason(other.getEndReason()),
-	_agent(other.getAgent()) {}
+	_agent(Agent(other.getAgent())) {}
 
 Game::~Game() {}
 
@@ -47,29 +47,24 @@ void Game::displayBoard(void) {
 	getBoard().display();
 }
 
-void Game::launch() {
-	if (getCurrentPlayer().getType() == "AI") {
-		auto [x, y] = _agent.play();
-		getBoard().setCell(x, y, getCurrentTurn());
-		updateState(x, y);
-		if (getEnd()) {
-			try {
-				std::cout << "Winner :" << getWinner().getName() << std::endl; 
-			}
-			catch (const std::logic_error& e) {
-				std::cout << "Error: " << e.what() << std::endl;
-			}
-		}
-		nextTurn();
-	}
-}
+// void Game::launch() {
+// 	if (getCurrentPlayer().getType() == "AI") {
+// 		auto [x, y] = _agent.play();
+// 		getBoard().setCell(x, y, getCurrentTurn());
+// 		updateState(x, y);
+// 		if (getEnd()) {
+// 			try {
+// 				std::cout << "Winner :" << getWinner().getName() << std::endl; 
+// 			}
+// 			catch (const std::logic_error& e) {
+// 				std::cout << "Error: " << e.what() << std::endl;
+// 			}
+// 		}
+// 		nextTurn();
+// 	}
+// }
 
 void Game::nextTurn(void) {
-	if (_currentTurn == 1) {
-		_currentTurn = 2;
-	} else {
-		_currentTurn = 1;
-	}
 	if (getCurrentPlayer().getType() == "AI") {
 		auto [x, y] = _agent.play();
         getBoard().setCell(x, y, getCurrentTurn());
@@ -83,7 +78,11 @@ void Game::nextTurn(void) {
 			}
 			return ;
 		}
-		nextTurn();
+	}
+	if (_currentTurn == 1) {
+		_currentTurn = 2;
+	} else {
+		_currentTurn = 1;
 	}
 }
 

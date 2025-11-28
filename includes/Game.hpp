@@ -25,7 +25,7 @@ class Game{
 		~Game();
 
 		void restart(void);
-		void launch(void);
+		// void launch(void);
 		void displayBoard(void);
 		void nextTurn(void);
 		bool moveIsValid(int x, int y, int p);

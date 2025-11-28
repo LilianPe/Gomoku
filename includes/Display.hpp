@@ -32,6 +32,8 @@ class Display {
 		Game _game;
 		GameState _state;
 		const int _cellSize = 40;
+		sf::Clock _aiClock;
+		bool _waitingForAi;
 		const int _gridSize = SIZE;
 		
 		void _drawGrid(sf::RenderWindow& window);
@@ -49,6 +51,7 @@ class Display {
 		void _displayEndMessage(sf::RenderWindow& window, sf::Font& font, int windowSize);
 		void _drawReplayButton(sf::RenderWindow& window, sf::Font& font, int windowSize);
 		void _drawLeavesButton(sf::RenderWindow& window, sf::Font& font, int windowSize);
+		// void _processAiTurn(Game &game);
 };
 
 #endif

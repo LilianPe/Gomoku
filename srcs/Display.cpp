@@ -1,11 +1,11 @@
 #include "Display.hpp"
 #include "Agent.hpp"
 
-Display::Display(void) : _board(std::make_shared<Board>()), _game(Game(_board)), _state(MENU) {}
+Display::Display(void) : _board(std::make_shared<Board>()), _game(Game(_board)), _state(MENU), _waitingForAi(false) {}
 
-Display::Display(Board board) : _board(std::make_shared<Board>(board)), _game(Game(_board)), _state(MENU) {}
+Display::Display(Board board) : _board(std::make_shared<Board>(board)), _game(Game(_board)), _state(MENU), _waitingForAi(false) {}
 
-Display::Display(const Display& other) : _board(std::make_shared<Board>(other.getBoard())), _game(other.getGame()), _state(other.getState()) {}
+Display::Display(const Display& other) : _board(std::make_shared<Board>(other.getBoard())), _game(other.getGame()), _state(other.getState()), _waitingForAi(false) {}
 
 Display::~Display() {}
 
@@ -40,12 +40,31 @@ void Display::open(void) {
             if (_state == GAME_OVER) {
                 _displayEndScreen(window, font, windowSize);
             }
-            _displayShadow(window);
+            if (_waitingForAi) {
+                if (_aiClock.getElapsedTime().asMilliseconds() > 20) {
+                    _game.nextTurn(); // fait jouer l’IA
+                    _waitingForAi = false;
+                }
+            }
+            else if (_state == PLAYING && _game.getCurrentPlayer().getType() == "AI") {
+                _waitingForAi = true;
+                _aiClock.restart();
+            }
+            if (_game.getCurrentPlayer().getType() != "AI") {
+                _displayShadow(window);
+            }
         }
         _handleEvents(window, windowSize);
         window.display();
     }
 }
+
+// void Display::_processAiTurn(Game &game) {
+//     if (game.getCurrentPlayer().getType() == "AI") {
+//         game.nextTurn();
+//         sf::sleep(sf::milliseconds(300));
+//     }
+// }
 
 void Display::_handleEvents(sf::RenderWindow& window, int windowSize) {
     sf::Event event;
@@ -81,19 +100,17 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
-            _game.launch();
         }
 
         // Bouton "Player vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 && mouseY < windowSize / 2 + 60) {
-            _game.getPlayer2().setType("Player");
+            _game.getPlayer1().setType("Player");
             _game.getPlayer1().setId(1);
             _game.getPlayer2().setType("AI");
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
-            _game.launch();
         }
         // Bouton "IA vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
@@ -104,7 +121,6 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
-            _game.launch();
         }
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 + 200 && mouseY < windowSize / 2 + 260) {
@@ -121,11 +137,6 @@ void Display::_handleMove(sf::Event& event) {
             if (_game.getPlayer1().getType() == "Player" && _game.moveIsValid(x, y, 1)) {
                 _playMove(x, y, 1);
             }
-            // if (_game.getPlayer1().getType() == "IA") {
-            //     Agent agent = Agent(_game);
-            //     auto [x, y] = agent.play();
-            //     _playMove(x, y, 1);
-            // }
         }
         else if (event.mouseButton.button == sf::Mouse::Right) {
             if (_game.getPlayer2().getType() == "Player" && _game.moveIsValid(x, y, 2) && _game.getPlayer2().getType() == "Player") {
