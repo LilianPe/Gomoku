@@ -42,8 +42,20 @@ void Display::open(void) {
             }
             if (_waitingForAi) {
                 if (_aiClock.getElapsedTime().asMilliseconds() > 20) {
+                    if (_game.getCurrentPlayer().getId() == 1) {
+                        _blackTurnClock.restart();
+                    } else {
+                        _whiteTurnClock.restart();
+                    }
                     _game.nextTurn(); // fait jouer l’IA
                     _waitingForAi = false;
+                    if (_game.getCurrentPlayer().getId() == 1) {
+                        _blackTurnClock.restart();
+                        _whiteFrozenTurnClock = _whiteTurnClock.getElapsedTime();
+                    } else {
+                        _whiteTurnClock.restart();
+                        _blackFrozenTurnClock = _blackTurnClock.getElapsedTime();
+                    }
                 }
             }
             else if (_state == PLAYING && _game.getCurrentPlayer().getType() == "AI") {
@@ -100,6 +112,8 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
+            _blackTurnClock.restart();
+            _whiteFrozenTurnClock = sf::Time::Zero;
         }
 
         // Bouton "Player vs IA"
@@ -111,6 +125,8 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
+            _blackTurnClock.restart();
+            _whiteFrozenTurnClock = sf::Time::Zero;
         }
         // Bouton "IA vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
@@ -121,6 +137,8 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
+            _blackTurnClock.restart();
+            _whiteFrozenTurnClock = sf::Time::Zero;
         }
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 + 200 && mouseY < windowSize / 2 + 260) {
@@ -136,11 +154,15 @@ void Display::_handleMove(sf::Event& event) {
         if (event.mouseButton.button == sf::Mouse::Left) {
             if (_game.getPlayer1().getType() == "Player" && _game.moveIsValid(x, y, 1)) {
                 _playMove(x, y, 1);
+                _blackFrozenTurnClock = _blackTurnClock.getElapsedTime();
+                _whiteTurnClock.restart();
             }
         }
         else if (event.mouseButton.button == sf::Mouse::Right) {
             if (_game.getPlayer2().getType() == "Player" && _game.moveIsValid(x, y, 2) && _game.getPlayer2().getType() == "Player") {
                 _playMove(x, y, 2);
+                _whiteFrozenTurnClock = _whiteTurnClock.getElapsedTime();
+                _blackTurnClock.restart();
             }
         }
     }
@@ -315,6 +337,46 @@ void Display::_updateBoard(sf::RenderWindow& window, int windowSize, sf::Font& f
     _drawGrid(window);
     _drawPieces(window);
     _drawScores(window, windowSize, font);
+    if (_state == PLAYING) {
+        _displayTimer(window, font, 10, 10, 1);
+        _displayTimer(window, font, 500, 10, 2);
+    }
+}
+
+void Display::_displayTimer(sf::RenderWindow& window, sf::Font& font, int x, int y, int id) {
+    sf::Text timerText;
+    timerText.setFont(font);
+    timerText.setCharacterSize(24);
+    timerText.setFillColor(sf::Color::Black);
+    timerText.setOutlineColor(sf::Color::White);
+    timerText.setOutlineThickness(2.f);
+
+    int currentPlayer = _game.getCurrentPlayer().getId();
+    sf::Clock currentClock = id == 1 ? _blackTurnClock : _whiteTurnClock;
+    sf::Time currentFrozenClock = id == 1 ? _blackFrozenTurnClock : _whiteFrozenTurnClock;
+    sf::Time time;
+    if (currentPlayer == id) {
+        time = currentClock.getElapsedTime(); 
+    } else {
+        time = currentFrozenClock;
+    }
+    if (_waitingForAi && _aiClock.getElapsedTime().asMilliseconds() <= 20) {
+        time = sf::Time::Zero;
+    }
+    int elapsedMs = time.asMilliseconds();
+    int seconds = (elapsedMs / 1000) % 60;
+    int minutes = elapsedMs / 60000;
+
+    std::string colour = id == 1 ? "Black " : " White ";
+    timerText.setString(
+        colour +
+        std::to_string(minutes) + "m " +
+        std::to_string(seconds) + "s" +
+        std::to_string(elapsedMs % 1000) + "ms"
+    );
+
+    timerText.setPosition(x, y);
+    window.draw(timerText);
 }
 
 void Display::_drawGrid(sf::RenderWindow& window) {

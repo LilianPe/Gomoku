@@ -5,6 +5,7 @@
 // # include "Agent.hpp"
 #include <sstream>
 #include <string>
+#include <thread>
 #include <SFML/Graphics.hpp>
 
 enum GameState {
@@ -32,6 +33,10 @@ class Display {
 		Game _game;
 		GameState _state;
 		const int _cellSize = 40;
+		sf::Time _whiteFrozenTurnClock;
+		sf::Time _blackFrozenTurnClock;
+		sf::Clock _whiteTurnClock;
+		sf::Clock _blackTurnClock;
 		sf::Clock _aiClock;
 		bool _waitingForAi;
 		const int _gridSize = SIZE;
@@ -47,6 +52,7 @@ class Display {
 		void _playMove(int x, int y, int player);
 		void _updateBoard(sf::RenderWindow& window, int windowSize, sf::Font& font);
 		void _handleEvents(sf::RenderWindow& window, int windowSize);
+		void _displayTimer(sf::RenderWindow& window, sf::Font& font, int x, int y, int id);
 		void _displayShadow(sf::RenderWindow& window);
 		void _displayEndMessage(sf::RenderWindow& window, sf::Font& font, int windowSize);
 		void _drawReplayButton(sf::RenderWindow& window, sf::Font& font, int windowSize);
