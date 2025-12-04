@@ -48,6 +48,9 @@ void Display::open(void) {
                         _whiteTurnClock.restart();
                     }
                     _game.nextTurn(); // fait jouer l’IA
+                    if (_game.getCurrentPlayer().getType() == "Player") {
+                        _displaySuggestion(window);
+                    }
                     _waitingForAi = false;
                     if (_game.getCurrentPlayer().getId() == 1) {
                         _blackTurnClock.restart();
@@ -85,7 +88,7 @@ void Display::_handleEvents(sf::RenderWindow& window, int windowSize) {
             window.close();
         }
         else if (_state == PLAYING) {
-            _handleMove(event);
+            _handleMove(event, window);
         }
 		else if (_state == GAME_OVER) {
             _handleButtons(window, event, windowSize);
@@ -112,6 +115,9 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
+            if (_game.getCurrentPlayer().getType() == "Player") {
+                _displaySuggestion(window);
+            }
             _blackTurnClock.restart();
             _whiteFrozenTurnClock = sf::Time::Zero;
         }
@@ -125,6 +131,9 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
+            if (_game.getCurrentPlayer().getType() == "Player") {
+                _displaySuggestion(window);
+            }
             _blackTurnClock.restart();
             _whiteFrozenTurnClock = sf::Time::Zero;
         }
@@ -147,7 +156,35 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
     }
 }
 
-void Display::_handleMove(sf::Event& event) {
+void Display::_displaySuggestion(sf::RenderWindow& window) {
+    auto [x, y] = _game.getAgent().play();
+    std::cout << "Best move: " << x << y << std::endl;
+
+    int hoverX = x;
+    int hoverY = y;
+    if (hoverX >= 0 && hoverX < _gridSize && hoverY >= 0 && hoverY < _gridSize) {
+        std::cout << "test1\n" << std::endl;
+        if (getBoard().getCell(hoverX, hoverY) == 0 && !_game.getEnd()) {
+            std::cout << "test2\n" << std::endl;
+            int currentPlayer = _game.getCurrentTurn();
+            sf::Color color = (currentPlayer == 1)
+                ? sf::Color(0, 0, 0, 100)
+                : sf::Color(255, 255, 255, 180);
+            sf::CircleShape ghost(_cellSize / 2.5f);
+            ghost.setPosition(hoverX * _cellSize,
+                            hoverY * _cellSize);
+            ghost.setFillColor(color);
+            ghost.setOutlineThickness(2);
+            ghost.setOutlineColor(sf::Color(50, 50, 50, 120));
+            window.draw(ghost);
+        }
+    }
+    // Ne marche pas car updateWindow le degage, il faut save la suggestion et la display a chaque update si currentPlayer == Player
+    // Aussi, voir si ca casse pas la fluidite, sinon, soit diminuer la profondeure sur les suggestions, soit passer dans des threads -> Integrer mutex etc... ptet galere
+    
+}
+
+void Display::_handleMove(sf::Event& event, sf::RenderWindow& window) {
     if (event.type == sf::Event::MouseButtonPressed) {
         int x = event.mouseButton.x / _cellSize;
         int y = event.mouseButton.y / _cellSize;
@@ -156,6 +193,9 @@ void Display::_handleMove(sf::Event& event) {
                 _playMove(x, y, 1);
                 _blackFrozenTurnClock = _blackTurnClock.getElapsedTime();
                 _whiteTurnClock.restart();
+                if (_game.getCurrentPlayer().getType() == "Player") {
+                    _displaySuggestion(window);
+                }
             }
         }
         else if (event.mouseButton.button == sf::Mouse::Right) {
@@ -163,6 +203,9 @@ void Display::_handleMove(sf::Event& event) {
                 _playMove(x, y, 2);
                 _whiteFrozenTurnClock = _whiteTurnClock.getElapsedTime();
                 _blackTurnClock.restart();
+                if (_game.getCurrentPlayer().getType() == "Player") {
+                    _displaySuggestion(window);
+                }
             }
         }
     }
