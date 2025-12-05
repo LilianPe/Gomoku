@@ -39,12 +39,13 @@ class Display {
 		sf::Clock _blackTurnClock;
 		sf::Clock _aiClock;
 		bool _waitingForAi;
+		sf::CircleShape _currentSuggestion;
 		const int _gridSize = SIZE;
 		
 		void _drawGrid(sf::RenderWindow& window);
 		void _drawPieces(sf::RenderWindow& window);
 		void _drawScores(sf::RenderWindow& window, int windowSize, sf::Font& Font);
-		void _handleMove(sf::Event& event, sf::RenderWindow& window);
+		void _handleMove(sf::Event& event);
 		void _handleMenu(sf::Event& event, sf::RenderWindow& window, int windowSize);
 		void _handleButtons(sf::RenderWindow& window, sf::Event& event, int windowSize);
 		void _displayMenu(sf::RenderWindow& window, sf::Font& font, int windowSize);
@@ -57,7 +58,7 @@ class Display {
 		void _displayEndMessage(sf::RenderWindow& window, sf::Font& font, int windowSize);
 		void _drawReplayButton(sf::RenderWindow& window, sf::Font& font, int windowSize);
 		void _drawLeavesButton(sf::RenderWindow& window, sf::Font& font, int windowSize);
-		void _displaySuggestion(sf::RenderWindow& window);
+		void _updateSuggestion();
 		// void _processAiTurn(Game &game);
 };
 

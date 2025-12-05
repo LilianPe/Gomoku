@@ -1,11 +1,11 @@
 #include "Display.hpp"
 #include "Agent.hpp"
 
-Display::Display(void) : _board(std::make_shared<Board>()), _game(Game(_board)), _state(MENU), _waitingForAi(false) {}
+Display::Display(void) : _board(std::make_shared<Board>()), _game(Game(_board)), _state(MENU), _waitingForAi(false), _currentSuggestion(0) {}
 
-Display::Display(Board board) : _board(std::make_shared<Board>(board)), _game(Game(_board)), _state(MENU), _waitingForAi(false) {}
+Display::Display(Board board) : _board(std::make_shared<Board>(board)), _game(Game(_board)), _state(MENU), _waitingForAi(false), _currentSuggestion(0) {}
 
-Display::Display(const Display& other) : _board(std::make_shared<Board>(other.getBoard())), _game(other.getGame()), _state(other.getState()), _waitingForAi(false) {}
+Display::Display(const Display& other) : _board(std::make_shared<Board>(other.getBoard())), _game(other.getGame()), _state(other.getState()), _waitingForAi(false), _currentSuggestion(0) {}
 
 Display::~Display() {}
 
@@ -49,7 +49,7 @@ void Display::open(void) {
                     }
                     _game.nextTurn(); // fait jouer l’IA
                     if (_game.getCurrentPlayer().getType() == "Player") {
-                        _displaySuggestion(window);
+                        _updateSuggestion();
                     }
                     _waitingForAi = false;
                     if (_game.getCurrentPlayer().getId() == 1) {
@@ -88,7 +88,7 @@ void Display::_handleEvents(sf::RenderWindow& window, int windowSize) {
             window.close();
         }
         else if (_state == PLAYING) {
-            _handleMove(event, window);
+            _handleMove(event);
         }
 		else if (_state == GAME_OVER) {
             _handleButtons(window, event, windowSize);
@@ -116,7 +116,7 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.restart();
             _state = PLAYING;
             if (_game.getCurrentPlayer().getType() == "Player") {
-                _displaySuggestion(window);
+                _updateSuggestion();
             }
             _blackTurnClock.restart();
             _whiteFrozenTurnClock = sf::Time::Zero;
@@ -132,7 +132,7 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.restart();
             _state = PLAYING;
             if (_game.getCurrentPlayer().getType() == "Player") {
-                _displaySuggestion(window);
+                _updateSuggestion();
             }
             _blackTurnClock.restart();
             _whiteFrozenTurnClock = sf::Time::Zero;
@@ -156,16 +156,14 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
     }
 }
 
-void Display::_displaySuggestion(sf::RenderWindow& window) {
+void Display::_updateSuggestion() {
     auto [x, y] = _game.getAgent().play();
     std::cout << "Best move: " << x << y << std::endl;
 
     int hoverX = x;
     int hoverY = y;
     if (hoverX >= 0 && hoverX < _gridSize && hoverY >= 0 && hoverY < _gridSize) {
-        std::cout << "test1\n" << std::endl;
         if (getBoard().getCell(hoverX, hoverY) == 0 && !_game.getEnd()) {
-            std::cout << "test2\n" << std::endl;
             int currentPlayer = _game.getCurrentTurn();
             sf::Color color = (currentPlayer == 1)
                 ? sf::Color(0, 0, 0, 100)
@@ -176,7 +174,7 @@ void Display::_displaySuggestion(sf::RenderWindow& window) {
             ghost.setFillColor(color);
             ghost.setOutlineThickness(2);
             ghost.setOutlineColor(sf::Color(50, 50, 50, 120));
-            window.draw(ghost);
+            _currentSuggestion = ghost;
         }
     }
     // Ne marche pas car updateWindow le degage, il faut save la suggestion et la display a chaque update si currentPlayer == Player
@@ -184,27 +182,29 @@ void Display::_displaySuggestion(sf::RenderWindow& window) {
     
 }
 
-void Display::_handleMove(sf::Event& event, sf::RenderWindow& window) {
+void Display::_handleMove(sf::Event& event) {
     if (event.type == sf::Event::MouseButtonPressed) {
         int x = event.mouseButton.x / _cellSize;
         int y = event.mouseButton.y / _cellSize;
         if (event.mouseButton.button == sf::Mouse::Left) {
             if (_game.getPlayer1().getType() == "Player" && _game.moveIsValid(x, y, 1)) {
                 _playMove(x, y, 1);
+                _currentSuggestion = sf::CircleShape(0.f);
                 _blackFrozenTurnClock = _blackTurnClock.getElapsedTime();
                 _whiteTurnClock.restart();
                 if (_game.getCurrentPlayer().getType() == "Player") {
-                    _displaySuggestion(window);
+                    _updateSuggestion();
                 }
             }
         }
         else if (event.mouseButton.button == sf::Mouse::Right) {
             if (_game.getPlayer2().getType() == "Player" && _game.moveIsValid(x, y, 2) && _game.getPlayer2().getType() == "Player") {
                 _playMove(x, y, 2);
+                _currentSuggestion = sf::CircleShape(0.f);
                 _whiteFrozenTurnClock = _whiteTurnClock.getElapsedTime();
                 _blackTurnClock.restart();
                 if (_game.getCurrentPlayer().getType() == "Player") {
-                    _displaySuggestion(window);
+                    _updateSuggestion();
                 }
             }
         }
@@ -384,6 +384,7 @@ void Display::_updateBoard(sf::RenderWindow& window, int windowSize, sf::Font& f
         _displayTimer(window, font, 10, 10, 1);
         _displayTimer(window, font, 500, 10, 2);
     }
+    window.draw(_currentSuggestion);
 }
 
 void Display::_displayTimer(sf::RenderWindow& window, sf::Font& font, int x, int y, int id) {

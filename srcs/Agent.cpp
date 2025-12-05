@@ -11,7 +11,7 @@ Agent::~Agent() {}
 // --- getAvailableMoves() : retourne la liste des coups possibles(ne prend que les coups proches de pions existants pour optimiser) ---
 std::vector<Move> Agent::getAvailableMoves(Game& game) {
     std::vector<Move> moves;
-    bool empty;
+    bool empty = true;
 
     for (int y = 0; y < SIZE; y++) {
         for (int x = 0; x < SIZE; x++) {
@@ -367,10 +367,10 @@ std::pair<int, int> Agent::play() {
     int origPlayer1Captures = temp.getPlayer1().getCaptures();
     int origPlayer2Captures = temp.getPlayer2().getCaptures();
     // Board origBoard = Board(temp.getBoard());
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
     
     int depth;
-    for (depth = 1; depth <= 10; ++depth) {
+    for (depth = 1; depth <= 2; ++depth) {
         if (depth > 1) {
             temp.getBoard().setCell(bestMove.x, bestMove.y, currentPlayer);
             int score = minimax(temp, depth - 1, false, -2000000, 2000000,
@@ -389,13 +389,13 @@ std::pair<int, int> Agent::play() {
                 bestScore = score;
                 bestMove = move;
             }
-            auto now = std::chrono::high_resolution_clock::now();
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(now-start).count() > 800) // 800ms max
-                break;
+            // auto now = std::chrono::high_resolution_clock::now();
+            // if (std::chrono::duration_cast<std::chrono::milliseconds>(now-start).count() > 800) // 800ms max
+            //     break;
             }
-            auto now = std::chrono::high_resolution_clock::now();
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(now-start).count() > 800) // 800ms max
-                break;
+            // auto now = std::chrono::high_resolution_clock::now();
+            // if (std::chrono::duration_cast<std::chrono::milliseconds>(now-start).count() > 800) // 800ms max
+            //     break;
     }
     // for (Move& move : moves) {
     //     temp.getBoard().setCell(move.x, move.y, currentPlayer);  // AI joue
