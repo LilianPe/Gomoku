@@ -48,16 +48,19 @@ void Display::open(void) {
                         _whiteTurnClock.restart();
                     }
                     _game.nextTurn(); // fait jouer l’IA
-                    if (_game.getCurrentPlayer().getType() == "Player") {
-                        _updateSuggestion();
-                    }
                     _waitingForAi = false;
                     if (_game.getCurrentPlayer().getId() == 1) {
-                        _blackTurnClock.restart();
                         _whiteFrozenTurnClock = _whiteTurnClock.getElapsedTime();
                     } else {
-                        _whiteTurnClock.restart();
                         _blackFrozenTurnClock = _blackTurnClock.getElapsedTime();
+                    }
+                    if (_game.getCurrentPlayer().getType() == "Player" && _game.getGameType() == PVSIA) {
+                        _updateSuggestion();
+                    }
+                    if (_game.getCurrentPlayer().getId() == 1) {
+                        _blackTurnClock.restart();
+                    } else {
+                        _whiteTurnClock.restart();
                     }
                 }
             }
@@ -115,9 +118,7 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
-            if (_game.getCurrentPlayer().getType() == "Player") {
-                _updateSuggestion();
-            }
+            _game.setGameType(PVSP);
             _blackTurnClock.restart();
             _whiteFrozenTurnClock = sf::Time::Zero;
         }
@@ -131,6 +132,7 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
             _game.getPlayer2().setId(2);
             _game.restart();
             _state = PLAYING;
+            _game.setGameType(PVSIA);
             if (_game.getCurrentPlayer().getType() == "Player") {
                 _updateSuggestion();
             }
@@ -140,13 +142,14 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
         // Bouton "IA vs IA"
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
             mouseY > windowSize / 2 + 100 && mouseY < windowSize / 2 + 160) {
-            _game.getPlayer1().setType("AI");
-            _game.getPlayer1().setId(1);
-            _game.getPlayer2().setType("AI");
-            _game.getPlayer2().setId(2);
-            _game.restart();
-            _state = PLAYING;
-            _blackTurnClock.restart();
+                _game.getPlayer1().setType("AI");
+                _game.getPlayer1().setId(1);
+                _game.getPlayer2().setType("AI");
+                _game.getPlayer2().setId(2);
+                _game.restart();
+                _state = PLAYING;
+                _game.setGameType(IAVSIA);
+                _blackTurnClock.restart();
             _whiteFrozenTurnClock = sf::Time::Zero;
         }
         if (mouseX > windowSize / 2 - 100 && mouseX < windowSize / 2 + 100 &&
@@ -189,10 +192,10 @@ void Display::_handleMove(sf::Event& event) {
                 _playMove(x, y, 1);
                 _currentSuggestion = sf::CircleShape(0.f);
                 _blackFrozenTurnClock = _blackTurnClock.getElapsedTime();
-                _whiteTurnClock.restart();
-                if (_game.getCurrentPlayer().getType() == "Player") {
+                if (_game.getCurrentPlayer().getType() == "Player" && _game.getGameType() == PVSIA) {
                     _updateSuggestion();
                 }
+                _whiteTurnClock.restart();
             }
         }
         else if (event.mouseButton.button == sf::Mouse::Right) {
@@ -200,10 +203,10 @@ void Display::_handleMove(sf::Event& event) {
                 _playMove(x, y, 2);
                 _currentSuggestion = sf::CircleShape(0.f);
                 _whiteFrozenTurnClock = _whiteTurnClock.getElapsedTime();
-                _blackTurnClock.restart();
-                if (_game.getCurrentPlayer().getType() == "Player") {
+                if (_game.getCurrentPlayer().getType() == "Player" && _game.getGameType() == PVSIA) {
                     _updateSuggestion();
                 }
+                _blackTurnClock.restart();
             }
         }
     }

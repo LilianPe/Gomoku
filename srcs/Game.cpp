@@ -10,7 +10,8 @@ Game::Game(std::shared_ptr<Board> board) :
 	_winner(0),
 	_end(false),
 	_endReason(""),
-	_agent(Agent(*this)) {}
+	_agent(Agent(*this)),
+	_gameType(PVSP) {}
 
 Game::Game(std::shared_ptr<Board> board, Player player1, Player player2) : 
 	_player1(player1),
@@ -20,7 +21,8 @@ Game::Game(std::shared_ptr<Board> board, Player player1, Player player2) :
 	_winner(0),
 	_end(false),
 	_endReason(""),
-	_agent(Agent(*this)) {}
+	_agent(Agent(*this)),
+	_gameType(PVSP) {}
 
 Game::Game(const Game& other) :
 	_player1(Player(other._player1)),
@@ -450,6 +452,14 @@ Player Game::getCurrentPlayer(void) const {
 
 std::vector<Capture>& Game::getCaptured(void) {
 	return _captured;
+}
+
+GameType Game::getGameType(void) {
+	return _gameType;
+}
+
+void Game::setGameType(GameType type) {
+	_gameType = type;
 }
 
 // Ajouter un bitBoard et modifier les verifications  pour chercher des patterns via bitShifting

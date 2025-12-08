@@ -2,9 +2,7 @@
 # include "Player.hpp"
 # include "Game.hpp"
 
-Agent::Agent(Game &game) : _game(&game) {
-    // _transpoTable.reserve(5'000'000);
-}
+Agent::Agent(Game &game) : _game(&game) {}
 Agent::~Agent() {}
 
 
@@ -45,7 +43,6 @@ std::vector<Move> Agent::getAvailableMoves(Game& game) {
 
 bool Agent::checkEnd(Game& game, int x, int y) {
 	game.updateState(x , y); // Placeholder implementation
-    // Ne pas appeller updateState, faire une fonction beaucoup plus rapide qui verifie uniquement les coups autour de x / y
 	if (game.getEnd()) {
 		return true;
 	}
@@ -85,17 +82,23 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY, int id) {
 	std::vector<int> weights;
 
     int score = 0;
-    std::vector<int> weight = {1, -50};
-    std::vector<int> playerFeatures = {0, 0};
-    std::vector<int> ennemyFeatures = {0, 0};
+    std::vector<int> weight = {1, 300, 100};
+    std::vector<int> playerFeatures = {0, 0, 0};
+    std::vector<int> ennemyFeatures = {0, 0, 0};
 
     // set les features d'allignement
     playerFeatures[0] =  _getAllignmentFeatures(game,playerInd);
     ennemyFeatures[0] = _getAllignmentFeatures(game, ennemyInd);
 
+    // captures
+    Player player = (playerInd == 1) ? game.getPlayer1() : game.getPlayer2();
+    Player ennemy = (ennemyInd == 1) ? game.getPlayer1() : game.getPlayer2();
+    playerFeatures[1] = player.getCaptures();
+    ennemyFeatures[1] = ennemy.getCaptures();
+
     //  possible captures
-	playerFeatures[1] = _get_n_capturable(game, playerInd);
-	ennemyFeatures[1] = _get_n_capturable(game, ennemyInd);
+	playerFeatures[2] = _get_n_capturable(game, playerInd);
+	ennemyFeatures[2] = _get_n_capturable(game, ennemyInd);
 
     // Calculating score
     for (long unsigned int i = 0; i < playerFeatures.size(); i++) {
@@ -236,180 +239,67 @@ bool Agent::_isInLimit(int x, int y) {
 	return (x >= 0 && x < SIZE && y >= 0 && y < SIZE);
 }
 
-int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta, int lastX, int lastY, int id) {
+int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta, int lastX, int lastY, int id) {
     // Note : on passe Game par VALEUR (copie) pour éviter undo
-    uint64_t boardKey = game.getBoard().getBoardHash();
-    Player player = (id == 1) ? game.getPlayer1() : game.getPlayer2();
-    Player ennemy = (id == 1) ? game.getPlayer2() : game.getPlayer1();
-    int playerCaptures = player.getCaptures();
-    int ennemyCaptures = ennemy.getCaptures();
-    auto it = _transpoTable.find(boardKey);
-    if (it != _transpoTable.end() && it->second.depth >= depth) {
-        auto& entry = it->second;
-        if (entry.flag == TTFlag::EXACT) {
-            // std::cout << "User TT!! key : " << boardKey << std::endl;
-            return it->second.score + playerCaptures - ennemyCaptures;
-        }
-        else if (entry.flag == TTFlag::LOWERBOUND && entry.score >= beta) {
-            // std::cout << "User TT!! key : " << boardKey << std::endl;
-            return it->second.score + playerCaptures - ennemyCaptures;
-        }
-        else if (entry.flag == TTFlag::UPPERBOUND && entry.score <= alpha) {
-            // std::cout << "User TT!! key : " << boardKey << std::endl;
-            return it->second.score + playerCaptures - ennemyCaptures;
-        }
-    }
 
     bool hasLastMove = (lastX != -1 && lastY != -1);
     bool gameOver = hasLastMove && checkEnd(game, lastX, lastY);
-    auto it2 = _boardMoves.find(boardKey);
-    std::vector<Move> moves;
-    if (it2 != _boardMoves.end()) {
-        moves = it2->second;
-    }
-    else {
-        moves = getAvailableMoves(game);
-        _boardMoves[boardKey] = moves;
-    }
+    std::vector<Move> moves = getAvailableMoves(game);
     int ennemyId = (id == 1) ? 2 : 1;
 
     if (depth == 0 || gameOver || moves.empty()) {
-        int score = 0;
-        auto it3 = _boardValues.find(boardKey);
-        if (it3 != _boardValues.end()) {
-            score = it3->second;
-        }
-        else {
-            score = evaluateBoard(game, lastX, lastY, id);
-            _boardValues[boardKey] = score;
-        }
-        _updateTable(game, TTFlag::EXACT, score, depth, boardKey);
-        return score + 300 * (playerCaptures - ennemyCaptures);
+        return evaluateBoard(game, lastX, lastY, id);
     }
 
-    int origAlpha = alpha;
-    int origPlayer1Captures = game.getPlayer1().getCaptures();
-    int origPlayer2Captures = game.getPlayer2().getCaptures();
-    // Board origBoard = Board(game.getBoard());
     if (isMaximizing) {
         int maxEval = -2000000;
-        for (Move& move : moves) {
-            game.getBoard().setCell(move.x, move.y, id);
-            int eval = minimax(game, depth - 1, false, alpha, beta, move.x, move.y, id);
-            // game.getBoard().setCell(move.x, move.y, 0);
-            _restoreGameValue(game, move, origPlayer1Captures, origPlayer2Captures);
+        for (const Move& move : moves) {
+            Game temp = game;
+            temp.getBoard().setCell(move.x, move.y, id);
+            int eval = minimax(temp, depth - 1, false, alpha, beta, move.x, move.y, id);
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
-            if (beta <= alpha) {
-                break ;
-            };
+            if (beta <= alpha) break;
         }
-        TTFlag flag = (maxEval <= origAlpha) ? TTFlag::UPPERBOUND : (maxEval >= beta) ? TTFlag::LOWERBOUND : TTFlag::EXACT;
-        _updateTable(game, flag, maxEval, depth, boardKey);
         return maxEval;
     } else {
         int minEval = 2000000;
-        for (Move& move : moves) {
-            game.getBoard().setCell(move.x, move.y, ennemyId);
-            int eval = minimax(game, depth - 1, true, alpha, beta, move.x, move.y, id);
-            // game.getBoard().setCell(move.x, move.y, 0);
-            _restoreGameValue(game, move, origPlayer1Captures, origPlayer2Captures);
+        for (const Move& move : moves) {
+            Game temp = game;
+            temp.getBoard().setCell(move.x, move.y, ennemyId);
+            int eval = minimax(temp, depth - 1, true, alpha, beta, move.x, move.y, id);
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
-            if (beta <= alpha) {
-                break;
-            }
+            if (beta <= alpha) break;
         }
-        TTFlag flag = (minEval <= origAlpha) ? TTFlag::UPPERBOUND : (minEval >= beta) ? TTFlag::LOWERBOUND : TTFlag::EXACT;
-        _updateTable(game, flag, minEval, depth, boardKey);
         return minEval;
     }
-}
-
-void Agent::_restoreGameValue(Game& game, Move& move, int origPlayer1Captures, int origPlayer2Captures) {
-    int captures = game.getPlayer1().getCaptures() + game.getPlayer2().getCaptures() - origPlayer1Captures - origPlayer2Captures;
-    game.setEnd(false);
-    game.getPlayer1().setCaptures(origPlayer1Captures);
-    game.getPlayer2().setCaptures(origPlayer2Captures);
-    game.getBoard().setCell(move.x, move.y, 0);
-    game.setWinnerId(0);
-    if (captures) {
-        game.resetCaptures(1);
-    }
-}
-
-void Agent::_updateTable(Game& game, TTFlag flag, int score, int depth, uint64_t hash) {
-    if (!hash) {
-        hash = game.getBoard().getBoardHash();
-    }
-    auto it = _transpoTable.find(hash);
-    if (it != _transpoTable.end() && it->second.depth > depth) {
-        return ;
-    }
-    TTValue value;
-    value.score = score;
-    value.depth = depth;
-    value.flag = flag;
-    _transpoTable[hash] = value;
 }
 
 // --- play() : version qui retourne le meilleur coup ---
 std::pair<int, int> Agent::play() {
     std::vector<Move> moves = getAvailableMoves(getGame());
     if (moves.empty()) return {-1, -1};  // plus de coups
-    if (moves.size() == 1) return {moves[0].x, moves[0].y};
     int bestScore = -2000000;
     Move bestMove = moves[0];
-    
-    
-    int currentPlayer = getGame().getCurrentPlayer().getId();
-    Game temp = getGameCopy();
-    int origPlayer1Captures = temp.getPlayer1().getCaptures();
-    int origPlayer2Captures = temp.getPlayer2().getCaptures();
-    // Board origBoard = Board(temp.getBoard());
-    // auto start = std::chrono::high_resolution_clock::now();
-    
-    int depth;
-    for (depth = 1; depth < 4; ++depth) {
-        if (depth > 1) {
-            temp.getBoard().setCell(bestMove.x, bestMove.y, currentPlayer);
-            int score = minimax(temp, depth - 1, false, -2000000, 2000000,
-                            bestMove.x, bestMove.y, currentPlayer);
-            _restoreGameValue(temp, bestMove, origPlayer1Captures, origPlayer2Captures);
+
+    const int depth = 2;  // Ajuste selon ton jeu
+
+    for (const Move& move : moves) {
+        Game temp = getGameCopy();
+        temp.getBoard().setCell(move.x, move.y, temp.getCurrentPlayer().getId());  // AI joue
+
+        int score = minimax(temp, depth - 1, false,
+                            -2000000, 2000000, move.x, move.y, temp.getCurrentPlayer().getId());
+        if (score > bestScore) {
             bestScore = score;
+            bestMove = move;
         }
-        for (Move& move : moves) {
-            if (depth > 1 && move.x == bestMove.x && move.y == bestMove.y)
-                continue;
-            temp.getBoard().setCell(move.x, move.y, currentPlayer);  // AI joue
-            int score = minimax(temp, depth - 1, false,
-                -2000000, 2000000, move.x, move.y, currentPlayer);
-            _restoreGameValue(temp, move, origPlayer1Captures, origPlayer2Captures);
-            if (score > bestScore) {
-                bestScore = score;
-                bestMove = move;
-            }
-            // auto now = std::chrono::high_resolution_clock::now();
-            // if (std::chrono::duration_cast<std::chrono::milliseconds>(now-start).count() > 800) // 800ms max
-            //     break;
-            }
-            // auto now = std::chrono::high_resolution_clock::now();
-            // if (std::chrono::duration_cast<std::chrono::milliseconds>(now-start).count() > 800) // 800ms max
-            //     break;
     }
-    // for (Move& move : moves) {
-    //     temp.getBoard().setCell(move.x, move.y, currentPlayer);  // AI joue
-    //     int score = minimax(temp, depth - 1, false,
-    //         -2000000, 2000000, move.x, move.y, currentPlayer);
-    //     _restoreGameValue(temp, move, origPlayer1Captures, origPlayer2Captures);
-    //     if (score > bestScore) {
-    //         bestScore = score;
-    //         bestMove = move;
-    //     }
-    // }
-    // printf("x : %d, y : %d | score: %d | depth: %d\n", bestMove.x, bestMove.y, bestScore, depth);
+    printf("x : %d, y : %d | score: %d\n", bestMove.x, bestMove.y, bestScore);
     return {bestMove.x, bestMove.y};
 }
+
 
 Game& Agent::getGame(void) const {
     return *_game;
@@ -418,6 +308,3 @@ Game& Agent::getGame(void) const {
 Game Agent::getGameCopy(void) const {
     return *_game;
 }
-
-// L'ia joue nimporte comment, recuperer un commit ou l'IA joue bien a 2 de profondeure et rajouter les modifs timer + suggestion
-// Projet de con

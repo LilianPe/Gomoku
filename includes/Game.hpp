@@ -10,6 +10,12 @@
 // 	int x, y;
 // };
 
+enum GameType {
+    PVSP,
+    PVSIA,
+    IAVSIA
+};
+
 struct Capture {
 	Move m1;
 	Move m2;
@@ -48,6 +54,8 @@ class Game{
 		Agent getAgent(void) const;
 		Player getCurrentPlayer(void) const;
 		std::vector<Move> getPlayerPawn(int x, int y);
+		GameType getGameType(void);
+		void setGameType(GameType type);
 
 	private:
 		void _checkFive(int x, int y);
@@ -65,6 +73,7 @@ class Game{
 		std::string _endReason;
 		Agent _agent;
 		std::vector<Capture> _captured;
+		GameType _gameType;
 };
 
 #endif
