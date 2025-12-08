@@ -158,8 +158,6 @@ void Display::_handleMenu(sf::Event& event, sf::RenderWindow& window, int window
 
 void Display::_updateSuggestion() {
     auto [x, y] = _game.getAgent().play();
-    std::cout << "Best move: " << x << y << std::endl;
-
     int hoverX = x;
     int hoverY = y;
     if (hoverX >= 0 && hoverX < _gridSize && hoverY >= 0 && hoverY < _gridSize) {
@@ -363,6 +361,7 @@ void Display::_displayShadow(sf::RenderWindow& window) {
 
 void Display::_playMove(int x, int y, int player) {
     getBoard().setCell(x, y, player);
+    printf("x: %d | y: %d | color: %d\n", x, y, player);
 	_game.updateState(x, y);
 	if (_game.getEnd()) {
         try {

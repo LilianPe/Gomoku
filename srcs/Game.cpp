@@ -67,6 +67,7 @@ void Game::displayBoard(void) {
 void Game::nextTurn(void) {
 	if (getCurrentPlayer().getType() == "AI") {
 		auto [x, y] = _agent.play();
+		printf("x: %d | y: %d | color: %d\n", x, y, getCurrentTurn());
         getBoard().setCell(x, y, getCurrentTurn());
 		updateState(x, y);
 		if (getEnd()) {

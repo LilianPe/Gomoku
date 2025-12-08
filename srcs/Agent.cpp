@@ -85,7 +85,7 @@ int Agent::evaluateBoard(Game& game, int lastX, int lastY, int id) {
 	std::vector<int> weights;
 
     int score = 0;
-    std::vector<int> weight = {1, 100};
+    std::vector<int> weight = {1, -50};
     std::vector<int> playerFeatures = {0, 0};
     std::vector<int> ennemyFeatures = {0, 0};
 
@@ -284,7 +284,7 @@ int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta
             _boardValues[boardKey] = score;
         }
         _updateTable(game, TTFlag::EXACT, score, depth, boardKey);
-        return score + playerCaptures - ennemyCaptures;
+        return score + 300 * (playerCaptures - ennemyCaptures);
     }
 
     int origAlpha = alpha;
@@ -370,7 +370,7 @@ std::pair<int, int> Agent::play() {
     // auto start = std::chrono::high_resolution_clock::now();
     
     int depth;
-    for (depth = 1; depth <= 2; ++depth) {
+    for (depth = 1; depth < 4; ++depth) {
         if (depth > 1) {
             temp.getBoard().setCell(bestMove.x, bestMove.y, currentPlayer);
             int score = minimax(temp, depth - 1, false, -2000000, 2000000,
@@ -407,7 +407,7 @@ std::pair<int, int> Agent::play() {
     //         bestMove = move;
     //     }
     // }
-    printf("x : %d, y : %d | score: %d | depth: %d\n", bestMove.x, bestMove.y, bestScore, depth);
+    // printf("x : %d, y : %d | score: %d | depth: %d\n", bestMove.x, bestMove.y, bestScore, depth);
     return {bestMove.x, bestMove.y};
 }
 
@@ -418,3 +418,6 @@ Game& Agent::getGame(void) const {
 Game Agent::getGameCopy(void) const {
     return *_game;
 }
+
+// L'ia joue nimporte comment, recuperer un commit ou l'IA joue bien a 2 de profondeure et rajouter les modifs timer + suggestion
+// Projet de con
