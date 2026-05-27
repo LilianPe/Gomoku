@@ -314,8 +314,8 @@ std::pair<int, int> Agent::play() {
     int ennemyId = (id == 1) ? 2 : 1;
     int bestScore = -2000000;
     Move bestMove = moves[0];
-    const int depth = 8;
-    const int MAX_CAND = 7;
+    const int depth = 6;
+    const int MAX_CAND = 5;
 
     std::vector<std::pair<int, Move>> scored;
     scored.reserve(moves.size());
