@@ -6,6 +6,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <future>
+#include <chrono>
 #include <SFML/Graphics.hpp>
 
 enum GameState {
@@ -39,6 +41,8 @@ class Display {
 		sf::Clock _blackTurnClock;
 		sf::Clock _aiClock;
 		bool _waitingForAi;
+		bool _aiStarted = false;
+		std::future<std::pair<int,int>> _aiFuture;
 		sf::CircleShape _currentSuggestion;
 		const int _gridSize = SIZE;
 		

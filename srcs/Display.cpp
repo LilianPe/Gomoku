@@ -41,14 +41,31 @@ void Display::open(void) {
                 _displayEndScreen(window, font, windowSize);
             }
             if (_waitingForAi) {
-                if (_aiClock.getElapsedTime().asMilliseconds() > 20) {
+                if (!_aiStarted && _aiClock.getElapsedTime().asMilliseconds() > 20) {
                     if (_game.getCurrentPlayer().getId() == 1) {
                         _blackTurnClock.restart();
                     } else {
                         _whiteTurnClock.restart();
                     }
-                    _game.nextTurn(); // fait jouer l’IA
+                    _aiStarted = true;
+                    _aiFuture = std::async(std::launch::async, [this]() {
+                        return _game.getAgent().play();
+                    });
+                }
+                if (_aiStarted && _aiFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+                    auto [x, y] = _aiFuture.get();
+                    _aiStarted = false;
                     _waitingForAi = false;
+                    _game.getBoard().setCell(x, y, _game.getCurrentTurn());
+                    _game.updateState(x, y);
+                    if (_game.getEnd()) {
+                        try {
+                            std::cout << "Winner :" << _game.getWinner().getName() << std::endl;
+                        } catch (const std::logic_error& e) {
+                            std::cout << "Error: " << e.what() << std::endl;
+                        }
+                    }
+                    _game.nextTurn();
                     if (_game.getCurrentPlayer().getId() == 1) {
                         _whiteFrozenTurnClock = _whiteTurnClock.getElapsedTime();
                     } else {
