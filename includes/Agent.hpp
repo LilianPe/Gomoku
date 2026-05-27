@@ -2,7 +2,8 @@
 # define AGENT_HPP
 # include <vector>
 # include <string>
-# include <iostream> 
+# include <iostream>
+# include <algorithm>
 # include "Player.hpp"
 # include "Board.hpp"
 // # include "Game.hpp"
@@ -26,8 +27,11 @@ class Agent {
 		
 		private:
 		std::vector<Move> getAvailableMoves(Game& game);
-		int evaluateBoard(Game& game , int lastX=-1, int lastY=-1, int id=0);
-		int minimax(Game game, int depth, bool isMaximizing, int alpha, int beta, int x=-1, int y=-1, int id=0);
+		int evaluateBoard(Game& game, int id=0);
+		int minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta, int id=0, int currentScore=0);
+		int _scoreMove(Game& game, int x, int y, int id);
+		int _scoreLine(const int* line, int n, int playerId);
+		int _computeLineScore(Game& game, int x, int y, int playerId, int enemyId);
 		int _get_n_capturable(Game& game, int playerInd);
 		int _getAllignmentFeatures(Game& game, int playerId);
 		int _getAllignementValue(int size, int closed, bool hole);

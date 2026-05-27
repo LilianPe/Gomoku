@@ -67,26 +67,8 @@ void Game::displayBoard(void) {
 // }
 
 void Game::nextTurn(void) {
-	if (getCurrentPlayer().getType() == "AI") {
-		auto [x, y] = _agent.play();
-		printf("x: %d | y: %d | color: %d\n", x, y, getCurrentTurn());
-        getBoard().setCell(x, y, getCurrentTurn());
-		updateState(x, y);
-		if (getEnd()) {
-			try {
-				std::cout << "Winner :" << getWinner().getName() << std::endl; 
-			}
-			catch (const std::logic_error& e) {
-				std::cout << "Error: " << e.what() << std::endl;
-			}
-			return ;
-		}
-	}
-	if (_currentTurn == 1) {
-		_currentTurn = 2;
-	} else {
-		_currentTurn = 1;
-	}
+	if (_currentTurn == 1) _currentTurn = 2;
+	else _currentTurn = 1;
 }
 
 bool Game::moveIsValid(int x, int y, int p) {

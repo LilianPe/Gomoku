@@ -49,60 +49,31 @@ bool Agent::checkEnd(Game& game, int x, int y) {
 	return false;
 }
 
-int Agent::evaluateBoard(Game& game, int lastX, int lastY, int id) {
-    int playerInd = id; // Definir player en fonction de quel player appelle l'agent
+int Agent::evaluateBoard(Game& game, int id) {
+    int playerInd = id;
     int ennemyInd = (playerInd == 1) ? 2 : 1;
-    if (lastX != -1 && lastY != -1 && checkEnd(game, lastX, lastY)) {
-        if (game.getWinner().getId() == playerInd) return + 1'000'000;  // AI gagne
-        else return (-1'000'000);  // Adversaire gagne
+    if (game.getEnd()) {
+        if (game.getWinnerId() == playerInd) return +1'000'000;
+        return -1'000'000;
     }
-    if (getAvailableMoves(game).empty()) return 0;  // Match nul
-
-
-    // Features (weight):
-	// - allignement de 4 sans pion autour (100 000) | X
-	// - allignement de 4 avec 1 pion qui bloque 1 cote (100) | X
-	// - allignement de 3 avec 0 bloque (100) | X
-	// - allignement de 3 avec 1 bloque (10) | X
-	// - allignement de 2 avec 0 bloque (5) | X
-	// - allignement de 2 avec 1 bloque (1) | X
-	// - peut etre prendre en compte les allignements de 5 et +, si un est mangeable | X
-	// - captures (300) | V
-	// - pions capturables (100) | V
-    //
-    //
-	// -- A ajouter potentiellement: 
-	// -- Position de chaque pion par rapport au bord
-	// --> pour chaque pion, feature += distance du bord le plus proche (weight -0.25-1)
-	// -- Densite des pions (Insite a creer des groupe)
-	// --> Genre pour chaque pion, si autour, il y a (XOX) -> +1 (weight 1-5) (prendre en compte que ce schemas sera compte 2 fois / occurence, diviser feature / 2) 
-	// --- Inclure dans les alignements les schemas suivants:
-	// 
-	// 
-	std::vector<int> weights;
 
     int score = 0;
     std::vector<int> weight = {1, 300, 100};
     std::vector<int> playerFeatures = {0, 0, 0};
     std::vector<int> ennemyFeatures = {0, 0, 0};
 
-    // set les features d'allignement
-    playerFeatures[0] =  _getAllignmentFeatures(game,playerInd);
+    playerFeatures[0] = _getAllignmentFeatures(game, playerInd);
     ennemyFeatures[0] = _getAllignmentFeatures(game, ennemyInd);
 
-    // captures
     Player player = (playerInd == 1) ? game.getPlayer1() : game.getPlayer2();
     Player ennemy = (ennemyInd == 1) ? game.getPlayer1() : game.getPlayer2();
     playerFeatures[1] = player.getCaptures();
     ennemyFeatures[1] = ennemy.getCaptures();
 
-    //  possible captures
-	playerFeatures[2] = _get_n_capturable(game, playerInd);
-	ennemyFeatures[2] = _get_n_capturable(game, ennemyInd);
+    playerFeatures[2] = _get_n_capturable(game, playerInd);
+    ennemyFeatures[2] = _get_n_capturable(game, ennemyInd);
 
-    // Calculating score
     for (long unsigned int i = 0; i < playerFeatures.size(); i++) {
-        // printf("Feature %lu : player %d | ennemy %d\n", i, playerFeatures[i], ennemyFeatures[i]); 
         score += playerFeatures[i] * weight[i];
         score -= ennemyFeatures[i] * weight[i];
     }
@@ -239,24 +210,58 @@ bool Agent::_isInLimit(int x, int y) {
 	return (x >= 0 && x < SIZE && y >= 0 && y < SIZE);
 }
 
-int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta, int lastX, int lastY, int id) {
-    // Note : on passe Game par VALEUR (copie) pour éviter undo
+int Agent::minimax(Game& game, int depth, bool isMaximizing, int alpha, int beta, int id, int currentScore) {
+    if (game.getEnd())
+        return evaluateBoard(game, id);
+    if (depth == 0)
+        return currentScore;
 
-    bool hasLastMove = (lastX != -1 && lastY != -1);
-    bool gameOver = hasLastMove && checkEnd(game, lastX, lastY);
     std::vector<Move> moves = getAvailableMoves(game);
-    int ennemyId = (id == 1) ? 2 : 1;
+    if (moves.empty())
+        return currentScore;
 
-    if (depth == 0 || gameOver || moves.empty()) {
-        return evaluateBoard(game, lastX, lastY, id);
-    }
+    int ennemyId = (id == 1) ? 2 : 1;
+    int currentId = isMaximizing ? id : ennemyId;
+
+    std::vector<std::pair<int, Move>> scored;
+    scored.reserve(moves.size());
+    for (const Move& m : moves)
+        scored.push_back({_scoreMove(game, m.x, m.y, currentId), m});
+    std::sort(scored.begin(), scored.end(), [](const std::pair<int, Move>& a, const std::pair<int, Move>& b) {
+        return a.first > b.first;
+    });
+    const int MAX_CAND = 7;
+    int n = std::min((int)scored.size(), MAX_CAND);
 
     if (isMaximizing) {
         int maxEval = -2000000;
-        for (const Move& move : moves) {
-            Game temp = game;
-            temp.getBoard().setCell(move.x, move.y, id);
-            int eval = minimax(temp, depth - 1, false, alpha, beta, move.x, move.y, id);
+        for (int i = 0; i < n; i++) {
+            const Move& move = scored[i].second;
+            int c1 = game.getPlayer1().getCaptures();
+            int c2 = game.getPlayer2().getCaptures();
+            int capSize = (int)game.getCaptured().size();
+            bool oldEnd = game.getEnd();
+            int oldWinner = game.getWinnerId();
+
+            int beforeLines = _computeLineScore(game, move.x, move.y, id, ennemyId);
+            game.getBoard().setCell(move.x, move.y, id);
+            game.updateState(move.x, move.y);
+            int afterLines = _computeLineScore(game, move.x, move.y, id, ennemyId);
+            int captDelta = (id == 1)
+                ? ((game.getPlayer1().getCaptures() - c1) - (game.getPlayer2().getCaptures() - c2)) * 300
+                : ((game.getPlayer2().getCaptures() - c2) - (game.getPlayer1().getCaptures() - c1)) * 300;
+            int delta = (afterLines - beforeLines) + captDelta;
+
+            int eval = minimax(game, depth - 1, false, alpha, beta, id, currentScore + delta);
+
+            game.getBoard().setCell(move.x, move.y, 0);
+            int captured = (int)game.getCaptured().size() - capSize;
+            if (captured > 0) game.resetCaptures(captured);
+            game.getPlayer1().setCaptures(c1);
+            game.getPlayer2().setCaptures(c2);
+            game.setEnd(oldEnd);
+            game.setWinnerId(oldWinner);
+
             maxEval = std::max(maxEval, eval);
             alpha = std::max(alpha, eval);
             if (beta <= alpha) break;
@@ -264,10 +269,33 @@ int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta,
         return maxEval;
     } else {
         int minEval = 2000000;
-        for (const Move& move : moves) {
-            Game temp = game;
-            temp.getBoard().setCell(move.x, move.y, ennemyId);
-            int eval = minimax(temp, depth - 1, true, alpha, beta, move.x, move.y, id);
+        for (int i = 0; i < n; i++) {
+            const Move& move = scored[i].second;
+            int c1 = game.getPlayer1().getCaptures();
+            int c2 = game.getPlayer2().getCaptures();
+            int capSize = (int)game.getCaptured().size();
+            bool oldEnd = game.getEnd();
+            int oldWinner = game.getWinnerId();
+
+            int beforeLines = _computeLineScore(game, move.x, move.y, id, ennemyId);
+            game.getBoard().setCell(move.x, move.y, ennemyId);
+            game.updateState(move.x, move.y);
+            int afterLines = _computeLineScore(game, move.x, move.y, id, ennemyId);
+            int captDelta = (id == 1)
+                ? ((game.getPlayer1().getCaptures() - c1) - (game.getPlayer2().getCaptures() - c2)) * 300
+                : ((game.getPlayer2().getCaptures() - c2) - (game.getPlayer1().getCaptures() - c1)) * 300;
+            int delta = (afterLines - beforeLines) + captDelta;
+
+            int eval = minimax(game, depth - 1, true, alpha, beta, id, currentScore + delta);
+
+            game.getBoard().setCell(move.x, move.y, 0);
+            int captured = (int)game.getCaptured().size() - capSize;
+            if (captured > 0) game.resetCaptures(captured);
+            game.getPlayer1().setCaptures(c1);
+            game.getPlayer2().setCaptures(c2);
+            game.setEnd(oldEnd);
+            game.setWinnerId(oldWinner);
+
             minEval = std::min(minEval, eval);
             beta = std::min(beta, eval);
             if (beta <= alpha) break;
@@ -278,19 +306,53 @@ int Agent::minimax(Game game, int depth, bool isMaximizing, int alpha, int beta,
 
 // --- play() : version qui retourne le meilleur coup ---
 std::pair<int, int> Agent::play() {
-    std::vector<Move> moves = getAvailableMoves(getGame());
-    if (moves.empty()) return {-1, -1};  // plus de coups
+    Game game = getGameCopy();
+    std::vector<Move> moves = getAvailableMoves(game);
+    if (moves.empty()) return {-1, -1};
+
+    int id = game.getCurrentPlayer().getId();
+    int ennemyId = (id == 1) ? 2 : 1;
     int bestScore = -2000000;
     Move bestMove = moves[0];
+    const int depth = 8;
+    const int MAX_CAND = 7;
 
-    const int depth = 2;  // Ajuste selon ton jeu
+    std::vector<std::pair<int, Move>> scored;
+    scored.reserve(moves.size());
+    for (const Move& m : moves)
+        scored.push_back({_scoreMove(game, m.x, m.y, id), m});
+    std::sort(scored.begin(), scored.end(), [](const std::pair<int, Move>& a, const std::pair<int, Move>& b) {
+        return a.first > b.first;
+    });
+    int n = std::min((int)scored.size(), MAX_CAND);
 
-    for (const Move& move : moves) {
-        Game temp = getGameCopy();
-        temp.getBoard().setCell(move.x, move.y, temp.getCurrentPlayer().getId());  // AI joue
+    for (int i = 0; i < n; i++) {
+        const Move& move = scored[i].second;
+        int c1 = game.getPlayer1().getCaptures();
+        int c2 = game.getPlayer2().getCaptures();
+        int capSize = (int)game.getCaptured().size();
+        bool oldEnd = game.getEnd();
+        int oldWinner = game.getWinnerId();
 
-        int score = minimax(temp, depth - 1, false,
-                            -2000000, 2000000, move.x, move.y, temp.getCurrentPlayer().getId());
+        int beforeLines = _computeLineScore(game, move.x, move.y, id, ennemyId);
+        game.getBoard().setCell(move.x, move.y, id);
+        game.updateState(move.x, move.y);
+        int afterLines = _computeLineScore(game, move.x, move.y, id, ennemyId);
+        int captDelta = (id == 1)
+            ? ((game.getPlayer1().getCaptures() - c1) - (game.getPlayer2().getCaptures() - c2)) * 300
+            : ((game.getPlayer2().getCaptures() - c2) - (game.getPlayer1().getCaptures() - c1)) * 300;
+        int delta = (afterLines - beforeLines) + captDelta;
+
+        int score = minimax(game, depth - 1, false, -2000000, 2000000, id, delta);
+
+        game.getBoard().setCell(move.x, move.y, 0);
+        int captured = (int)game.getCaptured().size() - capSize;
+        if (captured > 0) game.resetCaptures(captured);
+        game.getPlayer1().setCaptures(c1);
+        game.getPlayer2().setCaptures(c2);
+        game.setEnd(oldEnd);
+        game.setWinnerId(oldWinner);
+
         if (score > bestScore) {
             bestScore = score;
             bestMove = move;
@@ -300,6 +362,94 @@ std::pair<int, int> Agent::play() {
     return {bestMove.x, bestMove.y};
 }
 
+
+int Agent::_scoreLine(const int* line, int n, int playerId) {
+    int score = 0;
+    for (int i = 0; i < n; i++) {
+        if (line[i] != playerId) continue;
+        if (i > 0 && line[i - 1] == playerId) continue;
+
+        int size = 1, closed = 0;
+        bool hole = false;
+
+        if (i == 0 || line[i - 1] != 0) closed++;
+
+        int j = i + 1;
+        while (j < n) {
+            int cell = line[j];
+            if (cell != playerId) {
+                if (cell == 0) {
+                    if (j + 1 >= n) break;
+                    int nextCell = line[j + 1];
+                    if (nextCell == 0) break;
+                    else if (nextCell == playerId) {
+                        if (hole) break;
+                        hole = true;
+                        j++;
+                        continue;
+                    }
+                    else break;
+                } else {
+                    closed++;
+                    break;
+                }
+            } else {
+                size++;
+            }
+            j++;
+        }
+        if (j >= n) closed++;
+        score += _getAllignementValue(size, closed, hole);
+    }
+    return score;
+}
+
+int Agent::_computeLineScore(Game& game, int x, int y, int playerId, int enemyId) {
+    std::vector<std::pair<int, int>> dirs = {{1, 0}, {0, 1}, {1, 1}, {1, -1}};
+    int score = 0;
+
+    for (auto [dx, dy] : dirs) {
+        int line[19];
+        int n = 0;
+
+        int sx = x, sy = y;
+        while (_isInLimit(sx - dx, sy - dy)) { sx -= dx; sy -= dy; }
+
+        int cx = sx, cy = sy;
+        while (_isInLimit(cx, cy)) {
+            line[n++] = game.getBoard().getCell(cx, cy);
+            cx += dx; cy += dy;
+        }
+
+        score += _scoreLine(line, n, playerId) - _scoreLine(line, n, enemyId);
+    }
+    return score;
+}
+
+int Agent::_scoreMove(Game& game, int x, int y, int id) {
+    int ennemyId = (id == 1) ? 2 : 1;
+    int score = 0;
+    std::vector<std::pair<int, int>> dirs = {{1,0},{0,1},{1,1},{1,-1}};
+    int sizePoints[6] = {0, 1, 10, 100, 10000, 100000};
+
+    for (auto [dx, dy] : dirs) {
+        for (int playerId : {id, ennemyId}) {
+            int count = 0;
+            for (int sign : {-1, 1}) {
+                for (int i = 1; i <= 4; i++) {
+                    int nx = x + sign * i * dx;
+                    int ny = y + sign * i * dy;
+                    if (!_isInLimit(nx, ny) || game.getBoard().getCell(nx, ny) != playerId)
+                        break;
+                    count++;
+                }
+            }
+            int pts = sizePoints[std::min(count, 5)];
+            score += (playerId == id) ? pts * 2 : pts;
+        }
+    }
+    return score;
+}
 
 Game& Agent::getGame(void) const {
     return *_game;
