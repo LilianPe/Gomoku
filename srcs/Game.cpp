@@ -287,7 +287,20 @@ void Game::_checkCapture(int x, int y) {
 			}
 		}
 	} 
-	// Cheking for 10 captures
+	// A single move can capture several pairs and jump over 8 (6 -> 10)
+	if (_player1.getCaptures() >= 10) {
+		_end = true;
+		_endReason = "10 pawn captured.";
+		_winner = 1;
+		return ;
+	}
+	if (_player2.getCaptures() >= 10) {
+		_end = true;
+		_endReason = "10 pawn captured.";
+		_winner = 2;
+		return ;
+	}
+	// Cheking for 8 captures with a capturable pawn left
 	if (_player1.getCaptures() == 8) {
 
 		std::vector<std::pair<int, int>> points;

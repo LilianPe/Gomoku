@@ -10,7 +10,7 @@ INCLUDES = -I includes/
 SFML = libs/SFML-2.6.1
 SFML_TAR = libs/SFML-2.6.1-linux-gcc-64-bit.tar.gz
 SFML_INC = -I$(SFML)/include
-SFML_LIB = -L$(SFML)/lib -lsfml-graphics -lsfml-window -lsfml-system
+SFML_LIB = -L$(SFML)/lib -Wl,-rpath,'$$ORIGIN/libs/SFML-2.6.1/lib' -lsfml-graphics -lsfml-window -lsfml-system
 
 SRC_FILES = main Board Game Player Display Agent
 INC_FILES = Gomoku Board Game Player Display Agent
